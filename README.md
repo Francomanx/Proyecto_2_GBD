@@ -29,3 +29,12 @@ activo BOOLEAN DEFAULT TRUE,
 CONSTRAINT precio_valido CHECK (precio>=0)
 );
 ```
+```sql
+CREATE TABLE personal(
+personal_id SERIAL PRIMARY KEY,
+nombre VARCHAR(100) NOT NULL,
+rol VARCHAR (50) NOT NULL,
+correo VARCHAR(100) UNIQUE NOT NULL,
+telefono VARCHAR(20)
+);
+```
