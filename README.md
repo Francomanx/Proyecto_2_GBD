@@ -19,13 +19,13 @@ CONSTRAINT edad_valida CHECK (fecha_nacimiento <= '2007-06-04')
 ```
 ```sql
 CREATE TABLE productos (
-    producto_id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    precio INTEGER NOT NULL,
-    stock INTEGER NOT NULL DEFAULT 0,
-    categoria VARCHAR(100),
-    activo BOOLEAN DEFAULT TRUE,
-	CONSTRAINT precio_valido CHECK (precio>=0)
+producto_id SERIAL PRIMARY KEY,
+nombre VARCHAR(100) NOT NULL,
+descripcion TEXT,
+precio INTEGER NOT NULL,
+stock INTEGER NOT NULL DEFAULT 0,
+categoria VARCHAR(100),
+activo BOOLEAN DEFAULT TRUE,
+CONSTRAINT precio_valido CHECK (precio>=0)
 );
 ```
