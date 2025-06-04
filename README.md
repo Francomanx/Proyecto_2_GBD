@@ -13,7 +13,7 @@ direccion VARCHAR(50),
 fecha_nacimiento DATE NOT NULL,
 rut VARCHAR(12) UNIQUE NOT NULL,
 fecha_registro DATE NOT NULL,
-CONSTRAINT rut_valido CHECK (VALUE ~ '^\d{8}-[0-9k]'),
+CONSTRAINT rut_valido CHECK (rut ~ '^\d{8}-[0-9k]'),
 CONSTRAINT edad_valida CHECK (fecha_nacimiento >= '2007-06-04')
 );
 ```
