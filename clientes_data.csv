@@ -1,0 +1,51 @@
+cliente_id,nombre,correo_electronico,telefono,direccion,fecha_nacimiento,rut,fecha_registro
+1,Constanza Carlos,belen01@example.com,+56912268239,Calle Las Mosquetas,1958-11-07,26683768-8,2020-08-04
+2,Margarita Aliro,juansanchez@example.com,+56972263531,Daniel Leal,1966-04-12,66561114-0,2024-05-14
+3,Juan Christian,gdiaz@example.org,+56953533028,Jose Miguel Carrera,1954-05-16,86112823-1,2025-03-21
+4,Rafael Javiera,herreraclaudia@example.org,+56938092578,Juana Aburto,1978-04-13,63095799-9,2024-12-07
+5,Gonzalo Lucia,karlaconcha@example.net,+56953628622,Calle Diego Sepulveda,1967-07-20,80427965-K,2020-06-15
+6,Juan Abigail,catalinapozo@example.org,+56993423733,Calle Juana Chavez,1978-11-20,50296006-9,2020-03-06
+7,Sebastian Vladimir,alicialopez@example.org,+56914757232,Alberto Hurtado,1988-02-16,71938773-0,2020-12-07
+8,Rosa Maria,gcarrera@example.org,+56986343567,Calle Las Margaritas,2002-06-15,59175733-5,2025-04-04
+9,Camila Allison,pmadrid@example.net,+56992312100,Jose Salgado,1945-10-16,67884080-K,2020-04-09
+10,Renato Francisco,rodriguezjean@example.org,+56925491537,Los Naranjos,1977-06-27,14724985-2,2020-11-10
+11,Armando Katherine,leandroopazo@example.org,+56946799532,Calle Maria Torres,1971-12-10,47483676-K,2021-11-29
+12,Dominique Sergio,giselleortega@example.org,+56950702287,Av. Eusebio Lillo,1995-02-06,37388392-3,2025-01-02
+13,Luis Joaquin,amaro91@example.com,+56994323997,Calle Anibal Pinto Garmendia,1983-07-22,34916035-4,2021-01-31
+14,Sergio Stephanie,jose89@example.com,+56914255608,Manuel Duran,1992-03-11,81164039-7,2024-08-24
+15,Ricardo Gaspar,claudia94@example.org,+56932342566,Calle Jose Rodriguez,1970-11-05,78546450-2,2020-02-16
+16,Celeste Paloma,romeroaldo@example.org,+56933337137,Blas Carrasco,1992-02-19,19989499-8,2025-03-20
+17,Rafael Jocelyn,echeverriacarolina@example.org,+56965078158,Calle Los Lirios,1984-09-17,92138917-6,2024-09-08
+18,Jose Eduardo,paulaalvarado@example.com,+56977058482,Maria Cisternas,1994-10-07,18957684-1,2022-12-18
+19,Olga Patricia,jflores@example.com,+56973429937,Linda Rojas,1978-01-19,24752018-5,2020-01-15
+20,Gaspar Lina,valenzuelaleslie@example.net,+56951871731,Rafael Caceres,2005-09-09,55114760-4,2022-11-11
+21,Fernanda Fernanda,ramirezjuana@example.com,+56969839256,Calle Maria Concha,1959-05-26,46623112-4,2022-04-28
+22,Guido Liliana,andresmena@example.com,+56976094237,Calle Juan Contreras,1944-12-25,98848930-8,2021-04-13
+23,Joaquin Florencio,gtorres@example.com,+56951424199,Calle Barros Arana,1978-08-25,29184639-K,2022-02-07
+24,Adriana Benjamin,monicalagos@example.org,+56972530210,Los Cactus,1996-10-02,59983892-4,2023-11-07
+25,Silvana Sara,amalia11@example.com,+56947468953,Psje. Juan Toro,1969-07-25,39854856-4,2020-02-18
+26,Ricardo Martin,sguerrero@example.net,+56979565525,Diana Valenzuela,1961-04-03,74988593-6,2024-02-02
+27,Josefa Anais,gonzalezjaviera@example.com,+56934701153,Calle Caupolican,1984-05-17,28557444-8,2020-10-11
+28,Manuel Karen,arteagajavier@example.com,+56928629809,Cristobal Reyes,1999-02-14,42711423-7,2024-04-06
+29,Josefina Rene,pinayolanda@example.com,+56918448647,Calle Las Mosquetas,1978-04-06,97954720-9,2021-03-16
+30,Vicente Teresita,maldonadojuan@example.net,+56930908982,Avda. Arturo Alessandri Palma,1952-01-11,51387617-9,2020-05-16
+31,Miguel Matilda,ivanarenas@example.net,+56929203745,Calle Carolina Acevedo,1960-12-24,27907300-2,2022-08-19
+32,Fresia David,contrerasrocio@example.com,+56943700478,Avda. Mariana Guerra,1979-04-17,13391628-4,2022-03-28
+33,Hilda Jose,zpino@example.com,+56947560283,Pasaje Alvaro Casanova,1978-07-17,89779307-1,2022-11-29
+34,Marisol Esteban,arturofernandez@example.net,+56952133113,Las Mandarinas,1977-01-25,81569559-5,2022-12-18
+35,Rosalia Jose,osvaldozamorano@example.com,+56980092936,Sebastian Zamorano,1994-04-27,20871107-3,2021-11-10
+36,Nelson Isabel,bryanaros@example.net,+56979100234,Calle Caupolican,1951-09-22,32089441-5,2024-06-29
+37,Josefa Sara,hermes67@example.net,+56950637355,Las Mandarinas,1948-04-28,43086138-4,2020-02-09
+38,Pamela Maria,lidia67@example.com,+56927778925,Pedro Aguirre Cerda,1950-08-03,23163689-9,2023-03-21
+39,Rodrigo Eugenio,rhenriquez@example.org,+56932247555,Psje. Eliana Contreras,1961-11-17,54372504-3,2021-04-22
+40,Camila Manuel,rsalinas@example.net,+56926820486,Calle Las Malvas,1949-04-24,59645350-9,2024-08-03
+41,Carolina Christofer,ana35@example.com,+56976269254,Calle Rafael Arteaga,2003-04-21,41438722-7,2023-02-10
+42,Daniel Amanda,escalonapaz@example.com,+56934028463,Las Rosas,1985-06-02,39469399-9,2023-04-01
+43,Patricia Claudio,danteolivares@example.net,+56945287106,Manuel Rodriguez,1965-02-04,71033677-8,2020-01-02
+44,Jean Silvia,pobletemercedes@example.net,+56986843198,Av. Isidora Cordova,1965-06-03,29068936-3,2021-09-08
+45,Felipe Juan,perezbenjamin@example.org,+56989136181,Avenida Los Aromos,1958-02-18,83884010-5,2021-02-20
+46,Susan Juan,zalvarez@example.com,+56936881985,Av. Las Mandarinas,1976-03-12,55580616-0,2025-04-26
+47,Daniela Juan,alejandromiranda@example.net,+56984376070,Franco Lopez,1979-12-02,30261415-0,2023-02-04
+48,Eugenia Felipe,portega@example.org,+56914994926,Hector Vergara,1999-04-04,80696004-K,2023-02-22
+49,Mario Alexi,deliareyes@example.com,+56972860120,Jorge Gomez,1976-03-20,19336295-9,2023-04-12
+50,Claudio Bruno,uperez@example.com,+56917421675,Calle Los Girasoles,1969-03-18,39803983-6,2022-04-25
