@@ -43,7 +43,7 @@ CREATE TABLE pedidos (
     pedido_id SERIAL PRIMARY KEY,
     cliente_id INTEGER NOT NULL REFERENCES clientes(cliente_id),
     fecha_pedido DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
     total INTEGER NOT NULL DEFAULT 0 CHECK (total >= 0),
     vendedor_id INTEGER REFERENCES personal(personal_id)
 );
