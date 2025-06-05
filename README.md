@@ -49,7 +49,7 @@ CREATE TABLE pedidos (
 );
 ```
 
-##Procedures (Funciones)
+## Procedures (Funciones)
 
-##Triggers
+## Triggers
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
