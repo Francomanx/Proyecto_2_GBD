@@ -73,7 +73,7 @@ CREATE TABLE envios (
     envio_id SERIAL PRIMARY KEY,
     pedido_id INT NOT NULL REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
     distribuidor_id INT NOT NULL REFERENCES personal(personal_id) ON DELETE SET NULL,
-    estado_envio VARCHAR(50) CHECK (estado_envio IN ('pendiente', 'procesado', 'enviando', 'entregado')),
+    estado_envio VARCHAR(50) CHECK (estado_envio IN ('procesado', 'enviando', 'entregado')),
     fecha_envio DATE NOT NULL,
     fecha_entrega DATE,
     tracking VARCHAR(100) UNIQUE,
