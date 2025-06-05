@@ -69,8 +69,8 @@ DECLARE
 BEGIN
 	SELECT 
 		CASE 
-    		WHEN SUM(detallito.cantidad * detallito.precio_unitario) IS NULL THEN 0
-    		ELSE SUM(detallito.cantidad * detallito.precio_unitario)
+    			WHEN SUM(detallito.cantidad * detallito.precio_unitario) IS NULL THEN 0
+    			ELSE SUM(detallito.cantidad * detallito.precio_unitario)
 		END
 	INTO monto_total
 	FROM detalle_pedido detallito
