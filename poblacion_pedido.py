@@ -19,7 +19,7 @@ def generar_pedido(num_pedidos, id_clientes, id_vendedores):
     for _ in range(num_pedidos):
         cliente_id = random.choice(id_clientes)
         fecha_pedido = fake.date_this_month()
-        estado = random.choice(['Pendiente','Enviado','Entregado']) #tambien existe la posibilidad de que un pedido este cancelado, pero por ahora mejor dejemoslo asi
+        estado = random.choice(['pendiente','procesado','entregado']) #tambien existe la posibilidad de que un pedido este cancelado creo, pero por ahora mejor dejemoslo asi
         total = random.randint(29990,499990) #Estos valores son obsoletos pero una vez que se realicen los triggers para calcular los montos reales, tendran los valores correctos
         vendedor_id = random.choice(id_vendedores)
         pedidos.append([id_counter, cliente_id, fecha_pedido, estado, total, vendedor_id])
