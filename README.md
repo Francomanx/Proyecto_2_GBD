@@ -59,8 +59,9 @@ CREATE TABLE detalle_pedido (
 );
 ```
 
-## Procedures (Funciones)
+## Procedures y (Funciones)
 **A.- Calcular y actualizar el total del pedido**
+me acabo de dar cuenta que un procedure tambien estaria bueno, pero esto igual funciona
 ```sql
 CREATE FUNCTION calcular_total_de_pedido(id_pedido INTEGER)
 RETURNS INTEGER AS $$
