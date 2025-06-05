@@ -60,6 +60,27 @@ CREATE TABLE detalle_pedido (
 ```
 
 ## Procedures (Funciones)
-
+**A.- Calcular y actualizar el total del pedido**
+```sql
+CREATE FUNCTION calcular_total_de_pedido(id_pedido INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+	monto_total INTEGER;
+BEGIN
+	SELECT 
+		CASE 
+    		WHEN SUM(detallito.cantidad * detallito.precio_unitario) IS NULL THEN 0
+    		ELSE SUM(detallito.cantidad * detallito.precio_unitario)
+		END
+	INTO monto_total
+	FROM detalle_pedido detallito
+	WHERE detallito.pedido_id = id_pedido;
+	UPDATE pedidos
+	SET total = monto_total
+	WHERE pedido_id = id_pedido;
+	RETURN monto_total;
+END;
+$$ LANGUAGE 'plpgsql';
+```
 ## Triggers
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
