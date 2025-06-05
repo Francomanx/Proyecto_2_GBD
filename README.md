@@ -58,6 +58,16 @@ CREATE TABLE detalle_pedido (
 	CONSTRAINT evitar_producto_duplicado UNIQUE (pedido_id, producto_id)
 );
 ```
+```sql
+CREATE TABLE pago (
+    pago_id SERIAL PRIMARY KEY,
+    pedido_id INT NOT NULL REFERENCES pedidos(pedido_id),
+    fecha_pago DATE DEFAULT CURRENT_DATE,
+    monto INTEGER NOT NULL CHECK (monto > 0),
+    metodo_pago VARCHAR(50) CHECK (metodo_pago IN ('tarjeta', 'efectivo')),
+    estado_pago VARCHAR(50) CHECK (estado_pago IN ('pendiente', 'completado', 'rechazado'))
+);
+```
 
 ## Procedures y (Funciones)
 **A.- Calcular y actualizar el total del pedido**
