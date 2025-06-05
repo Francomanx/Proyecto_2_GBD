@@ -48,6 +48,16 @@ CREATE TABLE pedidos (
     vendedor_id INTEGER REFERENCES personal(personal_id)
 );
 ```
+```sql
+CREATE TABLE detalle_pedido (
+    detalle_id SERIAL PRIMARY KEY,
+    pedido_id INTEGER NOT NULL REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
+    producto_id INTEGER NOT NULL REFERENCES productos(producto_id),
+    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+    precio_unitario INTEGER NOT NULL CHECK (precio_unitario > 0),
+	CONSTRAINT evitar_producto_duplicado UNIQUE (pedido_id, producto_id)
+);
+```
 
 ## Procedures (Funciones)
 
