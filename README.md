@@ -116,5 +116,29 @@ END;
 $$ LANGUAGE 'plpgsql';
 ```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
+```sql
+--no sabia que se podia comentar waos
+--el procedure va a pedir el id del pedido, junto con el nuevo estado que se le quiera dar, y el id_del personal para verificar si es administrador o non
+CREATE PROCEDURE actualizar_estado_pedido(id_pedido INTEGER, nuevo_estado VARCHAR(50), id_personal INTEGER)
+LANGUAGE plpgsql AS $$
+BEGIN
+    --verificamos si el personal no existe. En el caso de que no, se llama la excepcion para mostrar el error en el output
+    IF NOT EXISTS (
+        SELECT * FROM personal WHERE personal_id = id_personal AND rol = 'Administrador'
+    ) THEN
+        RAISE EXCEPTION 'ERROR, solo los administradores pueden realizar cambios de estados';
+    END IF;
+    --si la excepcion no se llama, significa que podemos pasar a la siguiente verificacion
+	--ahora verificamos si el id del pedido no existe en nuestra base de datos
+	IF NOT EXISTS (
+		SELECT * FROM pedidos WHERE pedido_id = id_pedido
+	) THEN
+		RAISE EXCEPTION 'ERROR, el pedido ingresado no existe en nuestros datos';
+	END IF;
+	--ahora si ninguna de estas excepciones gritonearon, significa que podemos actualizar nuestro pedido
+    UPDATE pedidos SET estado = nuevo_estado WHERE pedido_id = id_pedido;
+END;
+$$;
+```
 ## Triggers
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
