@@ -163,3 +163,57 @@ EXECUTE FUNCTION actualizar_auditoria_pedido();
 ```
 
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
+
+## Casos de Prueba
+**Prueba numero 1: Funcionalidad correcta de Procedure G y Trigger B**
+
+Se supone que con esto, a la hora de querer cambiar de estado, hay que verificar dos cosas, siendo estas que el id del personal corresponda a un administrador y que la id del producto se encuentre presente en la base de datos
+Probemos la primera excepcion
+```sql
+CALL actualizar_estado_pedido(75,'entregado',8);
+```
+Esto deberia dar error en la segunda verificacion:
+```sql
+ERROR:  ERROR, el pedido ingresado no existe en nuestros datos
+CONTEXT:  función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 14 en RAISE 
+
+SQL state: P0001
+```
+EXITO... Sigamos adelante, ahora usemos un id de un pedido que si existe en la base, pero esta vez vamos a usar una id de un personal que NO es 'Administrador':
+```sql
+CALL actualizar_estado_pedido(9,'entregado',7);
+```
+Esto deberia dar error en la primer verificacion:
+```sql
+ERROR:  ERROR, solo los administradores pueden realizar cambios de estados
+CONTEXT:  función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 7 en RAISE 
+
+SQL state: P0001
+```
+EXITO... ahora usemos un id de un pedido que si existe en la base y una id de un personal que si es administrador, pero cambiemoslo por el mismo estado. Esto NO deberia ingresar nada en la tabla auditoria_pedidos
+```sql
+CALL actualizar_estado_pedido(1,'pendiente',8);
+```
+Segun nuestros csv's, el primer pedido ya tiene el estado pendiente, por ende, el procedure deberia funcionar, pero no agregar nada a la tabla auditoria_pedido:
+```sql
+CALL
+
+Query returned successfully in 105 msec.
+```
+Bueno, no cacho como mandar un mensaje para que me diga que no se añadio nada xd, pero me meti a la tabla y en efecto no hay nada de nada.....EXITOOOOOOOOO c r e o. YA LA ULTIMA PRUEBA, QUE TODO FUNCIONE. eso si, si se prueba hay que restaurar las tablas porque al no tener ciertos procedures y triggers hechos, voy a infringir un coso respecto a la tabla de envios. en vez de cambiar el estado al mismo, ahora pasara de estar de pendiente a procesado:
+```sql
+CALL actualizar_estado_pedido(1,'procesado',8);
+```
+Este cambio deberia de verse registrado en la tabla de auditoria_pedidos, veamos:
+```sql
+ERROR:  el registro «new» no tiene un campo «usuario_cambio»
+CONTEXT:  sentencia SQL: «INSERT INTO auditoria_pedidos (pedido_id, estado_anterior, estado_nuevo, fecha_cambio, usuario_cambio)
+        VALUES (NEW.pedido_id, OLD.estado, NEW.estado, CURRENT_DATE, NEW.usuario_cambio)»
+función PL/pgSQL actualizar_auditoria_pedido() en la línea 5 en sentencia SQL
+sentencia SQL: «UPDATE pedidos SET estado = nuevo_estado WHERE pedido_id = id_pedido»
+función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 17 en sentencia SQL 
+
+SQL state: 42703
+```
+ya me equivoque, toco rehacer los procedures y triggers :(
+
