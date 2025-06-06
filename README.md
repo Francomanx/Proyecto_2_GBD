@@ -141,4 +141,25 @@ END;
 $$;
 ```
 ## Triggers
+**B.- Registrar cambios de estado del pedido en Auditoria_Pedidos**
+Se hizo tanto el trigger como la funcion asociada al proceso de insercion del cambio de estado en uditoria_pedidos
+```sql
+CREATE OR REPLACE FUNCTION actualizar_auditoria_pedido()
+RETURNS TRIGGER AS $$
+BEGIN
+    --Verificamos si el estado realmente es diferente del anterior, sino no vale la pena agregarlo a la base de datos
+    IF OLD.estado != NEW.estado THEN
+        INSERT INTO auditoria_pedidos (pedido_id, estado_anterior, estado_nuevo, fecha_cambio, usuario_cambio)
+        VALUES (NEW.pedido_id, OLD.estado, NEW.estado, CURRENT_DATE, NEW.usuario_cambio);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizacion_auditoria_pedido
+AFTER UPDATE ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_auditoria_pedido();
+```
+
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
