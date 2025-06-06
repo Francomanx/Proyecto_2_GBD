@@ -80,6 +80,16 @@ CREATE TABLE envios (
     CONSTRAINT verificar_fecha_envio_y_entrega CHECK (fecha_entrega IS NULL OR fecha_entrega >= fecha_envio)
 );
 ```
+```sql
+CREATE TABLE auditoria_pedidos (
+    auditoria_id SERIAL PRIMARY KEY,
+    pedido_id INTEGER NOT NULL REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
+    estado_anterior VARCHAR(50) NOT NULL,
+    estado_nuevo VARCHAR(50) NOT NULL,
+    fecha_cambio DATE DEFAULT CURRENT_DATE,
+    usuario_cambio INTEGER NOT NULL REFERENCES personal(personal_id)
+);
+```
 
 ## Procedures y (Funciones)
 **A.- Calcular y actualizar el total del pedido**
