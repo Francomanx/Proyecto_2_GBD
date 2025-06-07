@@ -27,7 +27,8 @@ precio INTEGER NOT NULL,
 stock INTEGER NOT NULL DEFAULT 0,
 categoria VARCHAR(100),
 activo BOOLEAN DEFAULT TRUE,
-CONSTRAINT precio_valido CHECK (precio>=0)
+CONSTRAINT precio_valido CHECK (precio >= 0),
+umbral_critico INTEGER DEFAULT 4 CHECK (umbral_critico >= 0)
 );
 ```
 ```sql
