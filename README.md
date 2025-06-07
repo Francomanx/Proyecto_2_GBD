@@ -241,3 +241,48 @@ Este cambio deberia de verse registrado en la tabla de auditoria_pedidos, veamos
 CALL
 ```
 SE LOGROOOOOOOOOOO
+
+**Prueba Numero 2: El stock se descuenta (Trigger A)**
+Se supone que con esto, a la hora de agregar un detalle_producto, se va a realizar el calculo de stock - cantidad al producto referenciado. Esto tiene unas verificaciones por supuesto, aunque ahora que lo pienso existe la posibilidad de que al agregar el detalle del pedido, puedes colocar el precio unitario a 0, y creo que eso es un problemon. mmmm vamos a probar algo
+
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (5, 1, 2, 280000);
+```
+Vamos a insertar un detalle a un pedido que existe y con un stock valido. Si comparan el csv con la base de datos del postgre, podemos ver que en efecto, al producto 1 que tenia 15 de stock se le resta 2 quedando con 13 de stock. EXITO... por ahora. Hubo un problema con el contador de serial keys? tuve que intentar poner el insert varias veces hasta que llego al contador 30 (hay 30 detalles ingresados en el sistema). Voy a ver si esto se puede solucionar mas adelante para evitar este tipo de errores.
+
+Ahora me gustaria insertar un detalle_pedido de un pedido que no existe:
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (25, 1, 2, 280000);
+```
+Se supone que deberia haber un error, al no existir un pedido que tenga id 25
+```sql
+ERROR:  La llave (pedido_id)=(25) no está presente en la tabla «pedidos».inserción o actualización en la tabla «detalle_pedido» viola la llave foránea «detalle_pedido_pedido_id_fkey» 
+
+ERROR:  inserción o actualización en la tabla «detalle_pedido» viola la llave foránea «detalle_pedido_pedido_id_fkey»
+SQL state: 23503
+Detail: La llave (pedido_id)=(25) no está presente en la tabla «pedidos».
+```
+Muy bien, ahora la penultima prueba. Vamos a insertar un detalle_pedido de un pedido que existe y un producto que no existe:
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (5, 90, 1, 25000);
+```
+Esto deberia de dar error:
+```sql
+ERROR:  La llave (producto_id)=(90) no está presente en la tabla «productos».inserción o actualización en la tabla «detalle_pedido» viola la llave foránea «detalle_pedido_producto_id_fkey» 
+
+ERROR:  inserción o actualización en la tabla «detalle_pedido» viola la llave foránea «detalle_pedido_producto_id_fkey»
+SQL state: 23503
+Detail: La llave (producto_id)=(90) no está presente en la tabla «productos».
+```
+EXITO. LA ULTIMA PRUEBA. quiero agregar un detalle_pedido de un pedido que existe y un producto que existe, pero que pide una cantidad mayor a la que esta presente en el sistema. En mi caso el producto 1 tiene 13 stock, asi que si pedimos mas que eso deberia de dar error:
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (1, 1, 16, 280000);
+```
+Esto deberia de dar error:
+```sql
+ERROR:  ERROR, el stock del producto no es suficiente para el registro del detalle del pedido
+CONTEXT:  función PL/pgSQL descontar_stock_producto() en la línea 8 en RAISE 
+
+SQL state: P0001
+```
+EXITOOOO. algo de lo que me estoy dando cuenta es que la persona que agregue detalles, tiene toda la libertad de poner el precio unitario que tiene el detalle, ignorando el precio que tiene el producto. A lo mejor tendre que hacer otro trigger para arreglar esto? no me agrada la idea de que una persona tenga que andar viendo a cada rato el valor original del producto en la tabla de productos para agregarlo al precio unitario del detalle_producto con la buena intencion de mantener el orden en la base de datos
