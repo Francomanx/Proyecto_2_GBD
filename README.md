@@ -228,7 +228,7 @@ AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
-**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío. (50% COMPLETO)**
+**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío. (100% COMPLETO)**
 ```sql
 -- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio pipipi
 CREATE OR REPLACE FUNCTION notificar_cambio_estado_pedido_a_usuario()
@@ -254,23 +254,24 @@ RETURNS TRIGGER AS $$
 DECLARE id_cliente INT;
 BEGIN
     --Primero buscamos al cliente asociado al envio del pedido
-    SELECT p.cliente_id INTO id_cliente
+    SELECT pedidito.cliente_id INTO id_cliente
     FROM pedidos pedidito
     WHERE pedidito.pedido_id = NEW.pedido_id;
 
     -- Verificar si el estado del envío cambió
     IF NEW.estado_envio != OLD.estado_envio THEN
-        RAISE NOTICE 'Cliente Numero %s, su pedido %s ha cambiado el estado de su envio a: %s', id_cliente, NEW.pedido_id, NEW.estado_envio;
+        RAISE NOTICE 'Cliente Numero %, su pedido % ha cambiado el estado de su envio a: %', id_cliente, NEW.pedido_id, NEW.estado_envio;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_notificacion_cambio_envio_cliente
+CREATE OR REPLACE TRIGGER trigger_notificacion_cambio_envio_cliente
 AFTER UPDATE ON envios
 FOR EACH ROW
 EXECUTE FUNCTION notificar_cambio_estado_envio_a_cliente();
+
 ```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
@@ -414,4 +415,17 @@ Y como resultado nos da:
 NOTICE:  Cliente Numero 38, Su Pedido 1 ha cambiado de estado a: pendiente
 CALL
 ```
-EXITOOOOOOO, ya vimos que funciona :D
+EXITOOOOOOO, ya vimos que funciona :D. ahora probemos el otro trigger que deberia salir si hacemos lo siguiente:
+```sql
+UPDATE envios 
+SET estado_envio = 'enviando' 
+WHERE pedido_id = 5;
+```
+El envio con pedido_id = 5 tiene como estado 'entregado'...y como resultado tenemos:
+```sql
+NOTICE:  Cliente Numero 24, su pedido 5 ha cambiado el estado de su envio a: enviando
+UPDATE 1
+
+Query returned successfully in 148 msec.
+```
+y el cliente asociado al pedido 5 es.... 24, lo cual significa que fue un EXITAZOOOO
