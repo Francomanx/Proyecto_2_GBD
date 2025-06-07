@@ -366,6 +366,27 @@ BEFORE INSERT ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION verificar_asignacion_pedido();
 ```
+**G. Detectar cuando el stock de un producto cae por debajo de un umbral definido y registrar esta condición como "stock crítico"**
+```sql
+--Detectar cuando el stock de un producto cae por debajo de un umbral definido
+--y registrar esta condicion como "stock critico"
+CREATE OR REPLACE FUNCTION detectar_stock_critico()
+RETURNS TRIGGER AS $$
+BEGIN
+	--Si el stock nuevo es menor al umbral, se lanza el mensaje y ya esta
+	IF (NEW.stock <= NEW.umbral_critico) THEN
+		RAISE NOTICE 'El stock del producto % recientemente usado presenta un stock CRITICO: % unidades restantes',NEW.producto_id, NEW.stock;
+	END IF;
+
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_stock_critico
+AFTER UPDATE ON productos
+FOR EACH ROW
+EXECUTE FUNCTION detectar_stock_critico();
+```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
 
