@@ -228,6 +228,27 @@ AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
+**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío.**
+```sql
+-- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio pipipi
+CREATE OR REPLACE FUNCTION notificar_cambio_estado_pedido_a_usuario()
+RETURNS TRIGGER AS $$
+BEGIN
+    --Si el estado cambio, entonces toca notificar
+    IF NEW.estado != OLD.estado THEN
+        RAISE NOTICE 'Cliente Numero %, Su Pedido % ha cambiado de estado a: %', NEW.cliente_id, NEW.pedido_id, NEW.estado;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notificacion_cambio_pedido_usuario
+AFTER UPDATE ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION notificar_cambio_estado_pedido_a_usuario();
+
+```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
 ## Casos de Prueba
