@@ -119,7 +119,7 @@ $$ LANGUAGE 'plpgsql';
 ```sql
 --no sabia que se podia comentar waos
 --el procedure va a pedir el id del pedido, junto con el nuevo estado que se le quiera dar, y el id_del personal para verificar si es administrador o non
-CREATE PROCEDURE actualizar_estado_pedido(id_pedido INTEGER, nuevo_estado VARCHAR(50), id_personal INTEGER)
+CREATE OR REPLACE PROCEDURE actualizar_estado_pedido(id_pedido INTEGER, nuevo_estado VARCHAR(50), id_personal INTEGER)
 LANGUAGE plpgsql AS $$
 BEGIN
     --verificamos si el personal no existe. En el caso de que no, se llama la excepcion para mostrar el error en el output
@@ -136,6 +136,9 @@ BEGIN
 		RAISE EXCEPTION 'ERROR, el pedido ingresado no existe en nuestros datos';
 	END IF;
 	--ahora si ninguna de estas excepciones gritonearon, significa que podemos actualizar nuestro pedido
+
+	-- el id del personal se puede guardar en una session. En caso de que un trigger necesite informacion adicional, los sessions 
+	PERFORM set_config('session.usuario_cambio', id_personal::TEXT, FALSE);
     UPDATE pedidos SET estado = nuevo_estado WHERE pedido_id = id_pedido;
 END;
 $$;
