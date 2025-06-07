@@ -273,6 +273,30 @@ FOR EACH ROW
 EXECUTE FUNCTION notificar_cambio_estado_envio_a_cliente();
 
 ```
+**E.- Bloquear eliminación de clientes con pedidos activos.**
+```sql
+--Bloquear eliminacion de clientes con pedidos activos
+--Voy a considerar 'activo' como aquellos pedidos que tiene cualquier estado menos 'entregado'
+CREATE OR REPLACE FUNCTION verificar_eliminacion_cliente()
+RETURNS TRIGGER AS $$
+BEGIN
+	--para este caso sale bueno usar un if not exist
+	IF EXISTS (
+		SELECT 1 FROM pedidos WHERE OLD.cliente_id = pedidos.cliente_id AND pedidos.estado != 'entregado'
+	) THEN
+		RAISE EXCEPTION 'ERROR, el cliente no se puede eliminar dado a que tiene pedidos activos';
+	END IF;
+	-- si la excepcion no se llama, significa que el cliente no tiene pedidos activos y se procede a eliminar
+	RAISE NOTICE 'Se ha eliminado el usuario';
+	RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_bloquear_eliminacion_cliente
+BEFORE DELETE ON clientes
+FOR EACH ROW
+EXECUTE FUNCTION verificar_eliminacion_cliente();
+```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
 ## Casos de Prueba
@@ -429,3 +453,28 @@ UPDATE 1
 Query returned successfully in 148 msec.
 ```
 y el cliente asociado al pedido 5 es.... 24, lo cual significa que fue un EXITAZOOOO
+**Prueba Numero 5: Verificar que no se pueden eliminar clientes con pedidos activos (Trigger E)**
+
+Yap, se supone que si intentamos eliminar un cliente con pedidos activos no deberia dejarnos... asi que si realizamos la siguiente accion:
+```sql
+DELETE FROM clientes WHERE cliente_id = 38;
+```
+No se deberia eliminar el cliente puesto que tiene al menos un pedido que tiene como estado 'pendiente'. Por ende, esta accion deberia tirar un error:
+```sql
+ERROR:  ERROR, el cliente no se puede eliminar dado a que tiene pedidos activos
+CONTEXT:  función PL/pgSQL verificar_eliminacion_cliente() en la línea 7 en RAISE 
+
+SQL state: P0001
+```
+EXITO, pero que pasa si eliminamos a uno que en definitiva no tiene ningun pedido activo?:
+```sql
+DELETE FROM clientes WHERE cliente_id = 50;
+```
+Esto deberia de borrar el ultimo cliente, el cual no tiene ningun pedido enlazado a el. El resultado es el siguiente:
+```sql
+NOTICE:  Se ha eliminado el usuario
+DELETE 1
+
+Query returned successfully in 126 msec.
+```
+Y podemos ver que en efecto, El cliente numero 50 ha sido eliminado, lo cual es un EXITO
