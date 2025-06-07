@@ -787,3 +787,18 @@ INSERT INTO pedidos (cliente_id, estado, vendedor_id)
 VALUES (2, 'pendiente', 2);
 ```
 Como resultado nos salio INSERT 0 1 y podemos ver en la tabla de pedidos que en efecto, todo salio como esperaba (Mucho cuidado con las mayusculas por cierto xd)
+
+**Prueba numero 7: Verificar mensaje de stock critico (Trigger G)**
+
+Verifiquemos si sale el mensaje o no
+```sql
+UPDATE productos SET stock = 3 WHERE producto_id = 5;
+```
+El resultado es:
+```sql
+NOTICE:  El stock del producto 5 recientemente usado presenta un stock CRITICO: 3 unidades restantes
+UPDATE 1
+
+Query returned successfully in 126 msec.
+```
+Funciona...
