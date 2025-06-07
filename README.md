@@ -149,17 +149,20 @@ Se hizo tanto el trigger como la funcion asociada al proceso de insercion del ca
 ```sql
 CREATE OR REPLACE FUNCTION actualizar_auditoria_pedido()
 RETURNS TRIGGER AS $$
+DECLARE id_personal INT;
 BEGIN
     --Verificamos si el estado realmente es diferente del anterior, sino no vale la pena agregarlo a la base de datos
     IF OLD.estado != NEW.estado THEN
+		--obtenemos el id del personal en la session
+		SELECT current_setting('session.usuario_cambio')::INTEGER INTO id_personal;
         INSERT INTO auditoria_pedidos (pedido_id, estado_anterior, estado_nuevo, fecha_cambio, usuario_cambio)
-        VALUES (NEW.pedido_id, OLD.estado, NEW.estado, CURRENT_DATE, NEW.usuario_cambio);
+        VALUES (NEW.pedido_id, OLD.estado, NEW.estado, CURRENT_DATE, id_personal);
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_actualizacion_auditoria_pedido
+CREATE OR REPLACE TRIGGER trigger_actualizacion_auditoria_pedido
 AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_auditoria_pedido();
