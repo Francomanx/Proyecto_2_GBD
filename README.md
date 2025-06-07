@@ -228,7 +228,7 @@ AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
-**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío.**
+**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío. (50% COMPLETO)**
 ```sql
 -- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio pipipi
 CREATE OR REPLACE FUNCTION notificar_cambio_estado_pedido_a_usuario()
