@@ -144,6 +144,32 @@ END;
 $$;
 ```
 ## Triggers
+**A.- Descontar stock al insertar un detalle_pedido**
+```sql
+CREATE OR REPLACE FUNCTION descontar_stock_producto()
+RETURNS TRIGGER AS $$
+DECLARE stock_producto INTEGER;
+BEGIN
+	--Buscamos el valor stock del producto a restar
+	SELECT stock INTO stock_producto FROM productos WHERE productos.producto_id = NEW.producto_id;
+	--Y hacemos una condicional para ver si se puede descontar o non
+	IF stock_producto < NEW.cantidad THEN
+		RAISE EXCEPTION 'ERROR, el stock del producto no es suficiente para el registro del detalle del pedido';
+	END IF;
+	--En el caso de que el stock es suficiente
+	UPDATE productos
+	SET stock = stock - NEW.cantidad
+	WHERE productos.producto_id = NEW.producto_id;
+
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_descontar_stock
+BEFORE INSERT ON detalle_pedido
+FOR EACH ROW
+EXECUTE FUNCTION descontar_stock_producto();
+```
 **B.- Registrar cambios de estado del pedido en Auditoria_Pedidos**
 Se hizo tanto el trigger como la funcion asociada al proceso de insercion del cambio de estado en uditoria_pedidos
 ```sql
