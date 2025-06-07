@@ -286,3 +286,8 @@ CONTEXT:  función PL/pgSQL descontar_stock_producto() en la línea 8 en RAISE
 SQL state: P0001
 ```
 EXITOOOO. algo de lo que me estoy dando cuenta es que la persona que agregue detalles, tiene toda la libertad de poner el precio unitario que tiene el detalle, ignorando el precio que tiene el producto. A lo mejor tendre que hacer otro trigger para arreglar esto? no me agrada la idea de que una persona tenga que andar viendo a cada rato el valor original del producto en la tabla de productos para agregarlo al precio unitario del detalle_producto con la buena intencion de mantener el orden en la base de datos
+
+Para arreglar los contadores se pueden utilizar codigos asi:
+```sql
+SELECT setval('detalle_pedido_detalle_id_seq', (SELECT MAX(detalle_id) FROM detalle_pedido));
+```
