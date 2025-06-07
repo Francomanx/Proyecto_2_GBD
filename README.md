@@ -216,12 +216,17 @@ BEGIN
 		--El proceso de la creacion del codigo consiste en sacar los ultimos 8 caracteres de la derecha de la cadena aleatoria unica de md5()
 		codigo_tracking := RIGHT(md5(random()::text), 8);
 		INSERT INTO envios(pedido_id, distribuidor_id, estado_envio, fecha_envio, tracking)
-		VALUES (NEW.pedido_id, id_repartidor, 'enviando', CURRENT_TIME, codigo_tracking);
+		VALUES (NEW.pedido_id, id_repartidor, 'enviando', CURRENT_DATE, codigo_tracking);
 	END IF;
 
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_iniciar_envio
+AFTER UPDATE ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
@@ -320,3 +325,38 @@ Para arreglar los contadores se pueden utilizar codigos asi:
 ```sql
 SELECT setval('detalle_pedido_detalle_id_seq', (SELECT MAX(detalle_id) FROM detalle_pedido));
 ```
+**Prueba numero 3: Se generan envios por cambio de estado (Trigger C)**
+Para esto vamos a utilizar el Procedure G para cambiar el estado de algun pedido que este en pendiente y pase a estar procesado. Lo mas probable es que el contador este malardo y vuelva a ocurrir el mismo error en la prueba 2, pero no se sabe nada si lo intentamos.
+```sql
+CALL actualizar_estado_pedido(1,'procesado',8);
+```
+El pedido 1 tiene como estado pendiente, asi que es el caso perfecto para usarlo. Deberia funcionar todo bien xd:
+```sql
+ERROR:  Ya existe la llave (envio_id)=(1).llave duplicada viola restricción de unicidad «envios_pkey» 
+
+ERROR:  llave duplicada viola restricción de unicidad «envios_pkey»
+SQL state: 23505
+Detail: Ya existe la llave (envio_id)=(1).
+Context: sentencia SQL: «INSERT INTO envios(pedido_id, distribuidor_id, estado_envio, fecha_envio, tracking)
+		VALUES (NEW.pedido_id, id_repartidor, 'enviando', CURRENT_DATE, codigo_tracking)»
+función PL/pgSQL registrar_inicio_de_proceso_envio() en la línea 20 en sentencia SQL
+sentencia SQL: «UPDATE pedidos SET estado = nuevo_estado WHERE pedido_id = id_pedido»
+función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 20 en sentencia SQL
+```
+En efecto, ocurre lo mismo que en la segunda prueba, asi que hay que agregar una instruccion inicial de que luego de cargar los procedures, triggers, funciones y tablas de la base de datos, hay usar consultas para volver a sincronizar los contadores para las primary keys:
+```sql
+SELECT setval('envios_envio_id_seq', (SELECT MAX(envio_id) FROM envios));
+```
+Ya, ahora si, no deberia dar problema. Y como resultado tenemos un:
+```sql
+CALL
+```
+EXITAZOOOOOOOOOOOOOOOOOOOOOOOOOOOO. Pero bueno ahora vienen las pruebas mas pajeras y posiblemente mas adelante le tenga que hacer unos cambios al codigo de los tracking porque no encajan los que cree a mano con los que se crean mediante el trigger... que pasaria si cambio el estado a un pedido que ya tenia el estado procesado
+```sql
+CALL actualizar_estado_pedido(1,'procesado',8);
+```
+Y como resultado nos da:
+```sql
+CALL
+```
+Mish, no se nos añadio nada a auditoria_pedidos ni a envios.....LO CUAL ERA LO ESPERADO WUAJAJAJA EXITAZOOOOOOO
