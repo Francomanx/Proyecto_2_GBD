@@ -193,7 +193,36 @@ AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_auditoria_pedido();
 ```
+**C.- Registrar inicio de proceso de envio cuando cambia de estado a 'procesado'**
+```sql
+CREATE OR REPLACE FUNCTION registrar_inicio_de_proceso_envio()
+RETURNS TRIGGER AS $$
+DECLARE id_repartidor INTEGER;
+DECLARE codigo_tracking TEXT;
+BEGIN
+	--verificamos el estado del pedido para ver si paso a ser procesado o no. En caso de, tambien vale revisar si el estado procesado ya lo tuvo
+	IF NEW.estado = 'procesado' AND OLD.estado != 'procesado' THEN
+		--Si resulta estar procesado buscamos un repartidor al azar
+		SELECT personal_id INTO id_repartidor FROM personal WHERE rol = 'Distribuidor'
+		ORDER BY RANDOM() LIMIT 1;
 
+		--En caso de que no hayan repartidores disponibles
+		IF id_repartidor IS NULL THEN
+			RAISE EXCEPTION 'ERROR, en este momento no hay distribuidores disponibles';
+		END IF;
+
+		--En caso de que si haya un repartidor elegido, entonces se empieza a hacer registro del envio en la tabla
+		--No sin antes hacer el codigo del tracking
+		--El proceso de la creacion del codigo consiste en sacar los ultimos 8 caracteres de la derecha de la cadena aleatoria unica de md5()
+		codigo_tracking := RIGHT(md5(random()::text), 8);
+		INSERT INTO envios(pedido_id, distribuidor_id, estado_envio, fecha_envio, tracking)
+		VALUES (NEW.pedido_id, id_repartidor, 'enviando', CURRENT_TIME, codigo_tracking);
+	END IF;
+
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
 ## Casos de Prueba
