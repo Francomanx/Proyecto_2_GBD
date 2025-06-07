@@ -32,11 +32,12 @@ CONSTRAINT precio_valido CHECK (precio>=0)
 ```
 ```sql
 CREATE TABLE personal(
-personal_id SERIAL PRIMARY KEY,
-nombre VARCHAR(100) NOT NULL,
-rol VARCHAR (50) NOT NULL,
-correo VARCHAR(100) UNIQUE NOT NULL,
-telefono VARCHAR(20)
+    personal_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    telefono VARCHAR(20),
+    activo BOOLEAN DEFAULT TRUE
 );
 ```
 ```sql
@@ -264,6 +265,105 @@ CREATE TRIGGER trigger_iniciar_envio
 AFTER UPDATE ON pedidos
 FOR EACH ROW
 EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
+```
+**D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío. (100% COMPLETO)**
+```sql
+-- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio pipipi
+CREATE OR REPLACE FUNCTION notificar_cambio_estado_pedido_a_usuario()
+RETURNS TRIGGER AS $$
+BEGIN
+    --Si el estado cambio, entonces toca notificar
+    IF NEW.estado != OLD.estado THEN
+        RAISE NOTICE 'Cliente Numero %, Su Pedido % ha cambiado de estado a: %', NEW.cliente_id, NEW.pedido_id, NEW.estado;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notificacion_cambio_pedido_usuario
+AFTER UPDATE ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION notificar_cambio_estado_pedido_a_usuario();
+```
+```sql
+CREATE OR REPLACE FUNCTION notificar_cambio_estado_envio_a_cliente()
+RETURNS TRIGGER AS $$
+DECLARE id_cliente INT;
+BEGIN
+    --Primero buscamos al cliente asociado al envio del pedido
+    SELECT pedidito.cliente_id INTO id_cliente
+    FROM pedidos pedidito
+    WHERE pedidito.pedido_id = NEW.pedido_id;
+
+    -- Verificar si el estado del envío cambió
+    IF NEW.estado_envio != OLD.estado_envio THEN
+        RAISE NOTICE 'Cliente Numero %, su pedido % ha cambiado el estado de su envio a: %', id_cliente, NEW.pedido_id, NEW.estado_envio;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trigger_notificacion_cambio_envio_cliente
+AFTER UPDATE ON envios
+FOR EACH ROW
+EXECUTE FUNCTION notificar_cambio_estado_envio_a_cliente();
+
+```
+**E.- Bloquear eliminación de clientes con pedidos activos.**
+```sql
+--Bloquear eliminacion de clientes con pedidos activos
+--Voy a considerar 'activo' como aquellos pedidos que tiene cualquier estado menos 'entregado'
+CREATE OR REPLACE FUNCTION verificar_eliminacion_cliente()
+RETURNS TRIGGER AS $$
+BEGIN
+	--para este caso sale bueno usar un if not exist
+	IF EXISTS (
+		SELECT 1 FROM pedidos WHERE OLD.cliente_id = pedidos.cliente_id AND pedidos.estado != 'entregado'
+	) THEN
+		RAISE EXCEPTION 'ERROR, el cliente no se puede eliminar dado a que tiene pedidos activos';
+	END IF;
+	-- si la excepcion no se llama, significa que el cliente no tiene pedidos activos y se procede a eliminar
+	RAISE NOTICE 'Se ha eliminado el usuario';
+	RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_bloquear_eliminacion_cliente
+BEFORE DELETE ON clientes
+FOR EACH ROW
+EXECUTE FUNCTION verificar_eliminacion_cliente();
+```
+**F.- Prevenir asignacion de pedidos a personal no registrado o activo O A PERSONAL QUE NO SEA VENDEDOR**
+```sql
+--Prevenir asignacion de pedidos a personal no registrado o inactivo
+CREATE OR REPLACE FUNCTION verificar_asignacion_pedido()
+RETURNS TRIGGER AS $$
+DECLARE actividad BOOLEAN;
+DECLARE rols VARCHAR(50);
+BEGIN
+	--esto va a estar basado en la insercion de un pedido, entonces de por si ahi
+	--tenemos la id del personal
+	SELECT activo INTO actividad FROM personal WHERE personal.personal_id = NEW.vendedor_id;
+	IF (actividad != TRUE) THEN
+		RAISE EXCEPTION 'ERROR, el personal asignado no esta activo';
+	END IF;
+	--APROVECHAMOS DE HACER OTRA VERIFICACION SI EL PERSONAL ES UN VENDEDOR O NON
+	SELECT rol INTO rols FROM personal WHERE personal.personal_id = NEW.vendedor_id;
+	IF (rols != 'Vendedor') THEN
+		RAISE EXCEPTION 'ERROR, el personal asignado no es un vendedor, DEBE SERLO';
+	END IF;
+	
+	--en el caso de que no haya saltado la excepction, significa que se puede insertar
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_verificar_asignacion_pedido
+BEFORE INSERT ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION verificar_asignacion_pedido();
 ```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
@@ -547,3 +647,121 @@ Y como resultado nos da:
 CALL
 ```
 Mish, no se nos añadio nada a auditoria_pedidos ni a envios.....LO CUAL ERA LO ESPERADO WUAJAJAJA EXITAZOOOOOOO
+**Prueba Numero 4: El trigger de notificacion de cambio de pedido funciona**
+Para esto usaremos el procedure extra que hicimos:
+```sql
+CALL actualizar_estado_pedido(1,'pendiente',8);
+```
+Y como resultado nos da:
+```sql
+NOTICE:  Cliente Numero 38, Su Pedido 1 ha cambiado de estado a: pendiente
+CALL
+```
+EXITOOOOOOO, ya vimos que funciona :D. ahora probemos el otro trigger que deberia salir si hacemos lo siguiente:
+```sql
+UPDATE envios 
+SET estado_envio = 'enviando' 
+WHERE pedido_id = 5;
+```
+El envio con pedido_id = 5 tiene como estado 'entregado'...y como resultado tenemos:
+```sql
+NOTICE:  Cliente Numero 24, su pedido 5 ha cambiado el estado de su envio a: enviando
+UPDATE 1
+
+Query returned successfully in 148 msec.
+```
+y el cliente asociado al pedido 5 es.... 24, lo cual significa que fue un EXITAZOOOO
+**Prueba Numero 5: Verificar que no se pueden eliminar clientes con pedidos activos (Trigger E)**
+
+Yap, se supone que si intentamos eliminar un cliente con pedidos activos no deberia dejarnos... asi que si realizamos la siguiente accion:
+```sql
+DELETE FROM clientes WHERE cliente_id = 38;
+```
+No se deberia eliminar el cliente puesto que tiene al menos un pedido que tiene como estado 'pendiente'. Por ende, esta accion deberia tirar un error:
+```sql
+ERROR:  ERROR, el cliente no se puede eliminar dado a que tiene pedidos activos
+CONTEXT:  función PL/pgSQL verificar_eliminacion_cliente() en la línea 7 en RAISE 
+
+SQL state: P0001
+```
+EXITO, pero que pasa si eliminamos a uno que en definitiva no tiene ningun pedido activo?:
+```sql
+DELETE FROM clientes WHERE cliente_id = 50;
+```
+Esto deberia de borrar el ultimo cliente, el cual no tiene ningun pedido enlazado a el. El resultado es el siguiente:
+```sql
+NOTICE:  Se ha eliminado el usuario
+DELETE 1
+
+Query returned successfully in 126 msec.
+```
+Y podemos ver que en efecto, El cliente numero 50 ha sido eliminado, lo cual es un EXITO
+**Prueba numero 6: Verificar asignacion de pedidos a personal existente y correcto (Trigger F)**
+
+Primero vamos a verificar si se puede agregar un pedido a un cliente que NO EXISTE:
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (99, 'pendiente', 5);
+```
+nos deberia de dar como resultado un error (En nuestro sistema solo hay 50 clientes):
+```sql
+ERROR:  Ya existe la llave (pedido_id)=(1).llave duplicada viola restricción de unicidad «pedidos_pkey» 
+
+ERROR:  llave duplicada viola restricción de unicidad «pedidos_pkey»
+SQL state: 23505
+Detail: Ya existe la llave (pedido_id)=(1).
+```
+Verdad que hay que sincronizar los contadores de los PK:
+```sql
+SELECT setval('pedidos_pedido_id_seq', (SELECT MAX(pedido_id) FROM pedidos));
+```
+Ya con esto arreglado nos sale como resultado:
+```sql
+ERROR:  La llave (cliente_id)=(99) no está presente en la tabla «clientes».inserción o actualización en la tabla «pedidos» viola la llave foránea «pedidos_cliente_id_fkey» 
+
+ERROR:  inserción o actualización en la tabla «pedidos» viola la llave foránea «pedidos_cliente_id_fkey»
+SQL state: 23503
+Detail: La llave (cliente_id)=(99) no está presente en la tabla «clientes».
+```
+Bien, ahora suponiendo que pasara lo mismo con un personal que no existe, probemos si se puede agregar con un personal que esta inactivo. Nuestra lista por ahora esta llena de personal que esta activo, asi que cambiemos eso:
+```sql
+UPDATE personal
+SET activo = FALSE
+WHERE personal_id = 2;
+```
+Esto deberia hacer que el personal 2 que es vendedor, se encuentre inactivo, y por ende no deberia dejar registrar el pedido con un vendedor inactivo. Usaremos la siguiente consulta
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (1, 'pendiente', 2);
+```
+y tenemos como resultado:
+```sql
+ERROR:  ERROR, el personal asignado no esta activo
+CONTEXT:  función PL/pgSQL verificar_asignacion_pedido() en la línea 9 en RAISE 
+
+SQL state: P0001
+```
+Exito. Ahora devolvamosle la actividad al personal
+```sql
+UPDATE personal
+SET activo = TRUE
+WHERE personal_id = 2;
+```
+Y probemos que pasa si usamos a alguien del personal que NO SEA VENDEDOR
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (2, 'pendiente', 1);
+```
+Nos deberia dar error. El resulado es:
+```sql
+ERROR:  ERROR, el personal asignado no es un vendedor, DEBE SERLO
+CONTEXT:  función PL/pgSQL verificar_asignacion_pedido() en la línea 14 en RAISE 
+
+SQL state: P0001
+```
+BIEN, ahora verifiquemos si esto permite insertar un pedido por parte de un vendedor activo
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (2, 'pendiente', 2);
+```
+Como resultado nos salio INSERT 0 1 y podemos ver en la tabla de pedidos que en efecto, todo salio como esperaba (Mucho cuidado con las mayusculas por cierto xd)
