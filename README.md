@@ -1,5 +1,6 @@
 ## Proyecto_2_GBD
-no hace nada
+Insertar Descriptción
+
 
 ## Tablas
 
@@ -91,6 +92,40 @@ CREATE TABLE auditoria_pedidos (
 );
 ```
 
+
+## Orden para importar los datos
+Considerar que {ruta} es donde se clono este repositorio (ej. ```'C:/Users/juan/Desktop'```)
+
+- cliente
+```sql
+\copy clientes FROM '{ruta}/Proyecto_2_GBD/clientes_data.csv' DELIMITER ',' CSV HEADER
+```
+- productos
+```sql
+\copy productos FROM '{ruta}/Proyecto_2_GBD/productos_data.csv' DELIMITER ',' CSV HEADER
+```
+- personal
+```sql
+\copy personal FROM '{ruta}/Proyecto_2_GBD/personal_data.csv' DELIMITER ',' CSV HEADER
+```
+- pedidos
+```sql
+\copy pedidos FROM '{ruta}/Proyecto_2_GBD/pedido_data.csv' DELIMITER ',' CSV HEADER
+```
+- detalle_pedido
+```sql
+\copy detalle_pedido FROM '{ruta}/Proyecto_2_GBD/detalles_pedido_data.csv' DELIMITER ',' CSV HEADER
+```
+- pago
+```sql
+\copy pago FROM '{ruta}/Proyecto_2_GBD/pago_data.csv' DELIMITER ',' CSV HEADER
+```
+- envios
+```sql
+\copy envios FROM '{ruta}/Proyecto_2_GBD/envios_data.csv' DELIMITER ',' CSV HEADER
+```
+
+
 ## Procedures y (Funciones)
 **A.- Calcular y actualizar el total del pedido**
 me acabo de dar cuenta que un procedure tambien estaria bueno, pero esto igual funciona
@@ -143,6 +178,8 @@ BEGIN
 END;
 $$;
 ```
+
+
 ## Triggers
 **A.- Descontar stock al insertar un detalle_pedido**
 ```sql
@@ -229,6 +266,156 @@ FOR EACH ROW
 EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
+
+
+## Vistas
+**A.- Historial_Cliente: Muestra todos los pedidos y pagos por cliente.**
+```sql
+CREATE VIEW Historial_Cliente AS
+SELECT 
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.correo_electronico,
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado AS estado_pedido,
+    p.total AS total_pedido,
+    pg.pago_id,
+    pg.fecha_pago,
+    pg.monto,
+    pg.metodo_pago,
+    pg.estado_pago
+FROM clientes c
+INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
+LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
+ORDER BY c.cliente_id, p.fecha_pedido DESC;
+```
+
+**B.- Productos_Bajo_Stock: Productos con stock crítico.**
+
+Se definio que menos de 5 elementos se considera un stock critico
+```sql
+CREATE VIEW Productos_Bajo_Stock AS
+SELECT 
+    producto_id,
+    nombre,
+    categoria,
+    stock,
+    precio
+FROM productos
+WHERE stock < 5 AND activo = true;
+```
+
+**C.- Seguimiento_Envios: Consulta de pedidos, estados de envío y responsables.**
+```sql
+CREATE VIEW Seguimiento_Envios AS
+SELECT 
+	p.pedido_id,
+	p.fecha_pedido,
+	perV.nombre AS responsable_venta,
+	e.envio_id,
+	e.estado_envio,
+	e.fecha_envio,
+	e.fecha_entrega,
+	perD.nombre AS responsable_envio
+FROM pedidos p
+JOIN envios e ON p.pedido_id = e.pedido_id
+LEFT JOIN personal perD ON e.distribuidor_id = perD.personal_id
+LEFT JOIN personal perV ON p.vendedor_id = perV.personal_id
+ORDER BY p.pedido_id DESC;
+```
+
+**D.- Ventas_Por_Vendedor: Muestra totales por personal de ventas.**
+```sql
+CREATE VIEW Historial_Cliente AS
+SELECT 
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.correo_electronico,
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado AS estado_pedido,
+    p.total AS total_pedido,
+    pg.pago_id,
+    pg.fecha_pago,
+    pg.monto,
+    pg.metodo_pago,
+    pg.estado_pago
+FROM clientes c
+INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
+LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
+ORDER BY c.cliente_id, p.fecha_pedido DESC;
+```
+
+**E.- Entregas_Por_Distribuidor: Listado de entregas por distribuidor.**
+```sql
+CREATE VIEW Historial_Cliente AS
+SELECT 
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.correo_electronico,
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado AS estado_pedido,
+    p.total AS total_pedido,
+    pg.pago_id,
+    pg.fecha_pago,
+    pg.monto,
+    pg.metodo_pago,
+    pg.estado_pago
+FROM clientes c
+INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
+LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
+ORDER BY c.cliente_id, p.fecha_pedido DESC;
+```
+
+**F.- Notificaciones_Cliente: Historial de notificaciones enviadas a clientes.**
+```sql
+CREATE VIEW Historial_Cliente AS
+SELECT 
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.correo_electronico,
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado AS estado_pedido,
+    p.total AS total_pedido,
+    pg.pago_id,
+    pg.fecha_pago,
+    pg.monto,
+    pg.metodo_pago,
+    pg.estado_pago
+FROM clientes c
+INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
+LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
+ORDER BY c.cliente_id, p.fecha_pedido DESC;
+```
+
+**G.- Alerta_Stock_Critico: Productos con stock por debajo del umbral mínimo.**
+```sql
+CREATE VIEW Historial_Cliente AS
+SELECT 
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.correo_electronico,
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado AS estado_pedido,
+    p.total AS total_pedido,
+    pg.pago_id,
+    pg.fecha_pago,
+    pg.monto,
+    pg.metodo_pago,
+    pg.estado_pago
+FROM clientes c
+INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
+LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
+ORDER BY c.cliente_id, p.fecha_pedido DESC;
+```
+
+
+## Funciones y Reglas
+
 
 ## Casos de Prueba
 **Prueba numero 1: Funcionalidad correcta de Procedure G y Trigger B**
