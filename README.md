@@ -381,3 +381,14 @@ Y como resultado nos da:
 CALL
 ```
 Mish, no se nos añadio nada a auditoria_pedidos ni a envios.....LO CUAL ERA LO ESPERADO WUAJAJAJA EXITAZOOOOOOO
+**Prueba Numero 4: El trigger de notificacion de cambio de pedido funciona**
+Para esto usaremos el procedure extra que hicimos:
+```sql
+CALL actualizar_estado_pedido(1,'pendiente',8);
+```
+Y como resultado nos da:
+```sql
+NOTICE:  Cliente Numero 38, Su Pedido 1 ha cambiado de estado a: pendiente
+CALL
+```
+EXITOOOOOOO, ya vimos que funciona :D
