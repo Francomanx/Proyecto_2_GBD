@@ -31,11 +31,12 @@ CONSTRAINT precio_valido CHECK (precio>=0)
 ```
 ```sql
 CREATE TABLE personal(
-personal_id SERIAL PRIMARY KEY,
-nombre VARCHAR(100) NOT NULL,
-rol VARCHAR (50) NOT NULL,
-correo VARCHAR(100) UNIQUE NOT NULL,
-telefono VARCHAR(20)
+    personal_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    telefono VARCHAR(20),
+    activo BOOLEAN DEFAULT TRUE
 );
 ```
 ```sql
@@ -297,6 +298,36 @@ BEFORE DELETE ON clientes
 FOR EACH ROW
 EXECUTE FUNCTION verificar_eliminacion_cliente();
 ```
+**F.- Prevenir asignacion de pedidos a personal no registrado o activo O A PERSONAL QUE NO SEA VENDEDOR**
+```sql
+--Prevenir asignacion de pedidos a personal no registrado o inactivo
+CREATE OR REPLACE FUNCTION verificar_asignacion_pedido()
+RETURNS TRIGGER AS $$
+DECLARE actividad BOOLEAN;
+DECLARE rols VARCHAR(50);
+BEGIN
+	--esto va a estar basado en la insercion de un pedido, entonces de por si ahi
+	--tenemos la id del personal
+	SELECT activo INTO actividad FROM personal WHERE personal.personal_id = NEW.vendedor_id;
+	IF (actividad != TRUE) THEN
+		RAISE EXCEPTION 'ERROR, el personal asignado no esta activo';
+	END IF;
+	--APROVECHAMOS DE HACER OTRA VERIFICACION SI EL PERSONAL ES UN VENDEDOR O NON
+	SELECT rol INTO rols FROM personal WHERE personal.personal_id = NEW.vendedor_id;
+	IF (rols != 'Vendedor') THEN
+		RAISE EXCEPTION 'ERROR, el personal asignado no es un vendedor, DEBE SERLO';
+	END IF;
+	
+	--en el caso de que no haya saltado la excepction, significa que se puede insertar
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_verificar_asignacion_pedido
+BEFORE INSERT ON pedidos
+FOR EACH ROW
+EXECUTE FUNCTION verificar_asignacion_pedido();
+```
 consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
 
 ## Casos de Prueba
@@ -478,3 +509,72 @@ DELETE 1
 Query returned successfully in 126 msec.
 ```
 Y podemos ver que en efecto, El cliente numero 50 ha sido eliminado, lo cual es un EXITO
+**Prueba numero 6: Verificar asignacion de pedidos a personal existente y correcto (Trigger F)**
+
+Primero vamos a verificar si se puede agregar un pedido a un cliente que NO EXISTE:
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (99, 'pendiente', 5);
+```
+nos deberia de dar como resultado un error (En nuestro sistema solo hay 50 clientes):
+```sql
+ERROR:  Ya existe la llave (pedido_id)=(1).llave duplicada viola restricción de unicidad «pedidos_pkey» 
+
+ERROR:  llave duplicada viola restricción de unicidad «pedidos_pkey»
+SQL state: 23505
+Detail: Ya existe la llave (pedido_id)=(1).
+```
+Verdad que hay que sincronizar los contadores de los PK:
+```sql
+SELECT setval('pedidos_pedido_id_seq', (SELECT MAX(pedido_id) FROM pedidos));
+```
+Ya con esto arreglado nos sale como resultado:
+```sql
+ERROR:  La llave (cliente_id)=(99) no está presente en la tabla «clientes».inserción o actualización en la tabla «pedidos» viola la llave foránea «pedidos_cliente_id_fkey» 
+
+ERROR:  inserción o actualización en la tabla «pedidos» viola la llave foránea «pedidos_cliente_id_fkey»
+SQL state: 23503
+Detail: La llave (cliente_id)=(99) no está presente en la tabla «clientes».
+```
+Bien, ahora suponiendo que pasara lo mismo con un personal que no existe, probemos si se puede agregar con un personal que esta inactivo. Nuestra lista por ahora esta llena de personal que esta activo, asi que cambiemos eso:
+```sql
+UPDATE personal
+SET activo = FALSE
+WHERE personal_id = 2;
+```
+Esto deberia hacer que el personal 2 que es vendedor, se encuentre inactivo, y por ende no deberia dejar registrar el pedido con un vendedor inactivo. Usaremos la siguiente consulta
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (1, 'pendiente', 2);
+```
+y tenemos como resultado:
+```sql
+ERROR:  ERROR, el personal asignado no esta activo
+CONTEXT:  función PL/pgSQL verificar_asignacion_pedido() en la línea 9 en RAISE 
+
+SQL state: P0001
+```
+Exito. Ahora devolvamosle la actividad al personal
+```sql
+UPDATE personal
+SET activo = TRUE
+WHERE personal_id = 2;
+```
+Y probemos que pasa si usamos a alguien del personal que NO SEA VENDEDOR
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (2, 'pendiente', 1);
+```
+Nos deberia dar error. El resulado es:
+```sql
+ERROR:  ERROR, el personal asignado no es un vendedor, DEBE SERLO
+CONTEXT:  función PL/pgSQL verificar_asignacion_pedido() en la línea 14 en RAISE 
+
+SQL state: P0001
+```
+BIEN, ahora verifiquemos si esto permite insertar un pedido por parte de un vendedor activo
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id) 
+VALUES (2, 'pendiente', 2);
+```
+Como resultado nos salio INSERT 0 1 y podemos ver en la tabla de pedidos que en efecto, todo salio como esperaba (Mucho cuidado con las mayusculas por cierto xd)
