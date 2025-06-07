@@ -1,4 +1,4 @@
-# Proyecto_2_GBD
+## Proyecto_2_GBD
 no hace nada
 
 ## Tablas
@@ -212,14 +212,6 @@ CALL actualizar_estado_pedido(1,'procesado',8);
 ```
 Este cambio deberia de verse registrado en la tabla de auditoria_pedidos, veamos:
 ```sql
-ERROR:  el registro «new» no tiene un campo «usuario_cambio»
-CONTEXT:  sentencia SQL: «INSERT INTO auditoria_pedidos (pedido_id, estado_anterior, estado_nuevo, fecha_cambio, usuario_cambio)
-        VALUES (NEW.pedido_id, OLD.estado, NEW.estado, CURRENT_DATE, NEW.usuario_cambio)»
-función PL/pgSQL actualizar_auditoria_pedido() en la línea 5 en sentencia SQL
-sentencia SQL: «UPDATE pedidos SET estado = nuevo_estado WHERE pedido_id = id_pedido»
-función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 17 en sentencia SQL 
-
-SQL state: 42703
+CALL
 ```
-ya me equivoque, toco rehacer los procedures y triggers :(
-
+SE LOGROOOOOOOOOOO
