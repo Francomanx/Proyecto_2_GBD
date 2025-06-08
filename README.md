@@ -231,6 +231,43 @@ BEGIN
 END;
 $$;
 ```
+**E.- Enviar notificaciones de actualización de estado de pedido a los clientes**
+```sql
+CREATE OR REPLACE PROCEDURE notificar_actualizacion_de_estado_cliente (id_cliente INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE nombre_cliente VARCHAR(100);
+DECLARE antiguo_estado VARCHAR(50);
+DECLARE nuevo_estado VARCHAR(50);
+DECLARE id_pedido_actual INTEGER;
+BEGIN
+	--Primero podriamos buscar si el cliente a buscar existe en nuestra base de datos
+	IF NOT EXISTS (SELECT 1 FROM clientes WHERE clientes.cliente_id = id_cliente) THEN
+		RAISE EXCEPTION 'ERROR: la id ingresada no esta presente en nuestra base de datos';
+	END IF;
+	--En el caso de que esto no ocurra, significa que existe
+	SELECT nombre into nombre_cliente FROM clientes WHERE clientes.cliente_id = id_cliente;
+	--Tengo pensado ahora recorrer la lista de pedidos que tengan presente la id del cliente para luego
+	--usar esta lista en donde buscaremos si cada una de estas ids presenta algun dato en auditoria_pedidos
+	--Usando siempre el ULTIMO CAMBIO realizado al pedido
+	FOR id_pedido_actual IN
+		SELECT pedido_id FROM pedidos WHERE cliente_id = id_cliente
+	LOOP
+		SELECT estado_anterior INTO antiguo_estado FROM auditoria_pedidos WHERE auditoria_pedidos.pedido_id = id_pedido_actual
+		ORDER BY fecha_cambio DESC --Si usamos esto obtenemos la ultima vez que se realizo un cambio a dicho pedido
+		LIMIT 1;
+		SELECT estado_nuevo INTO nuevo_estado FROM auditoria_pedidos WHERE auditoria_pedidos.pedido_id = id_pedido_actual
+		ORDER BY fecha_cambio DESC --Si usamos esto obtenemos la ultima vez que se realizo un cambio a dicho pedido
+		LIMIT 1;
+		--Si se logra encontrar un dato presente en auditoria_pedidos, significa que el pedido si puede ser notificado al cliente
+		--con comprobar que uno no sea null basta
+		IF antiguo_estado IS NOT NULL THEN 
+			RAISE NOTICE '%, Tu pedido con id % Tuvo un cambio de estado: de % a %',nombre_cliente,id_pedido_actual,antiguo_estado,nuevo_estado;
+		END IF;
+	END LOOP;
+END;
+$$;
+```
 **F.- Actualizar umbrales de stock critico por producto**
 ```sql
 CREATE OR REPLACE PROCEDURE actualizar_umbral_critico(id_producto INTEGER, nuevo_umbral_critico INTEGER)
@@ -1000,4 +1037,25 @@ Esto deberia de cambiar el producto 12 a tener el valor de umbral critico de 4 a
 NOTICE:  Umbral critico editado
 CALL
 ````
-EXITOOO. 
+EXITO
+
+**Prueba Numero 12: Verificar envio de notificaciones a usuarios respecto a los cambios de estado de sus pedidos**
+Usamos esta consulta:
+```sql
+CALL notificar_actualizacion_de_estado_cliente(38);
+```
+El cliente 38 (al menos en mi base de datos) es el unico que presenta datos de cambio de estado en auditoria_pedidos (probamos en una prueba anterior con el pedido numero 1). Por ende si le deberia informar acerca de los cambios realizados en sus pedidos. Como resultado tenemos que:
+
+```sql
+NOTICE:  Pamela Maria, Tu pedido con id 1 Tuvo un cambio de estado: de pendiente a procesado
+CALL
+
+Query returned successfully in 103 msec
+```
+EXITO. Que pasa si pedimos la id de alguien que no existe?:
+```sql
+ERROR: la id ingresada no esta presente en nuestra base de datos
+CONTEXT:  función PL/pgSQL notificar_actualizacion_de_estado_cliente(integer) en la línea 9 en RAISEERROR:  ERROR: la id ingresada no esta presente en nuestra base de datos
+SQL state: P0001
+```
+Perfecto
