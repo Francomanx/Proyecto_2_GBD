@@ -705,6 +705,26 @@ BEGIN
 END;
 $$;
 ```
+**C. es_stock_critico(producto_id INT): Retorna TRUE si el stock actual es menor o igual al umbral definido para ese producto.**
+```sql
+CREATE OR REPLACE FUNCTION es_stock_critico(id_producto INTEGER)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE critico_umbral INTEGER;
+DECLARE stock_producto INTEGER;
+BEGIN
+	--primero verificamos que el stock exista
+	IF NOT EXISTS(SELECT producto_id FROM productos WHERE productos.producto_id = id_producto) THEN
+		RAISE EXCEPTION 'ERROR, el producto no existe';
+	END IF;
+	--Ahora que lo encontramos verificamos si su stock presenta estado critico o no
+	SELECT umbral_critico INTO critico_umbral FROM productos WHERE productos.producto_id = id_producto;
+	SELECT stock INTO stock_producto FROM productos WHERE productos.producto_id = id_producto;
+	RETURN stock_producto <= critico_umbral;
+END;
+$$;
+```
 ## Casos de Prueba
 **Prueba numero 1: Funcionalidad correcta de Procedure G y Trigger B**
 
@@ -1117,5 +1137,34 @@ SELECT validar_rut_chileno('123424321');
 Deberia retornar false. Nuestro resultado es:
 ```sql
 false
+```
+EXITO
+
+**Prueba Numero 15: verificar funcionalidad de es_stock_critico**
+
+Usaremos esta consulta para ver que pasa si pedimos el stock critico de un producto que no existe:
+```sql
+SELECT es_stock_critico(105); 
+```
+Deberia darnos error. El resultado es:
+```sql
+ERROR:  ERROR, el producto no existe
+CONTEXT:  función PL/pgSQL es_stock_critico(integer) en la línea 7 en RAISE
+```
+Exito, que pasa si verificamos si un producto que NO presenta stock critico, lo presenta o no
+```
+SELECT es_stock_critico(1);
+```
+Mi producto 1 tiene 13 de stock y su umbral_critico esta en 10, por ende deberia dar false. El resultado es:
+```sql
+false
+```
+Bien, ahora para un producto que si tiene stock critico deberia retornar true:
+```sql
+SELECT es_stock_critico(3); 
+```
+Mi producto 3 tiene 8 de stock y su umbral_critico esta en 10. El resultado es:
+```sql
+true
 ```
 EXITO
