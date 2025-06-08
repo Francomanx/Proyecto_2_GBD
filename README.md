@@ -152,6 +152,46 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 ```
+**B.- Registrar pago y verificar su validez**
+```sql
+--Procedimiento B. Registrar pago y verificar su validez
+CREATE OR REPLACE PROCEDURE registrar_pago (id_pedido INTEGER, monto_pagar INTEGER, forma_pago VARCHAR(50))
+LANGUAGE plpgsql
+AS $$
+DECLARE total_pedido INTEGER;
+DECLARE estado_pedido VARCHAR(50);
+BEGIN
+	--Primero revisamos si la id entregada existe en la base de datos de pedidos
+	SELECT total INTO total_pedido FROM pedidos WHERE pedidos.pedido_id = id_pedido;
+	--Si no se encuentra se lanza una exception
+	IF total_pedido IS NULL THEN
+		RAISE EXCEPTION 'ERROR, el pedido que quieres pagar no presenta un costo o no existe en nuestra base de datos';
+	END IF;
+	--En el caso de que se haya encontrado, revisemos su estado
+	SELECT estado INTO estado_pedido FROM pedidos WHERE pedidos.pedido_id = id_pedido;
+	--Si un pedido tiene un estado diferente de pendiente, significa que esto ya esta pagado
+	IF (estado_pedido != 'pendiente') THEN
+		RAISE EXCEPTION 'ERROR, este pedido no presenta el estado pendiente, por ende, el pago ya fue realizado para este pedido';
+	END IF;
+	--Ahora vamos a ver si se puede pagar
+	IF (total_pedido > monto_pagar)THEN
+		RAISE EXCEPTION 'ERROR, el monto otorgado es menor a lo que hay que pagar';
+	END IF;
+	--Si se puede pagar, entonces registramos el pago
+	--No sin antes verificar si el metodo de pago es valido para nuestro sistema
+	IF (forma_pago != 'tarjeta' AND forma_pago != 'efectivo') THEN
+		RAISE EXCEPTION 'ERROR, la forma de pago no es aceptada en nuestra base de datos (se recomienda solo uso de minusculas para declarar tu tipo de pago)';
+	END IF;
+	--Ahora si
+	INSERT INTO pago (pedido_id, fecha_pago, monto, metodo_pago, estado_pago)
+	VALUES (id_pedido, CURRENT_DATE, monto_pagar, forma_pago, 'completado');
+	--Y actualizamos el estado de pendiente a procesado (en caso de que este pendiente)
+	UPDATE pedidos
+	SET estado = 'procesado' WHERE pedidos.pedido_id = id_pedido;
+	RAISE NOTICE 'Pago registrado';
+END;
+$$;
+```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
 ```sql
 --no sabia que se podia comentar waos
@@ -801,4 +841,68 @@ UPDATE 1
 
 Query returned successfully in 126 msec.
 ```
-Funciona...
+Funciona
+
+
+**Prueba numero 8: Registrar pago de un pedido pendiente (Procedimiento B)**
+Vamos a intentar pagar un pedido que no existe
+```sql
+CALL registrar_pago(99, 5000, 'tarjeta');
+```
+Esto deberia de dar error. El resultado que nos salio es:
+```sql
+ERROR:  ERROR, el pedido que quieres pagar no presenta un costo o no existe en nuestra base de datos
+CONTEXT:  función PL/pgSQL registrar_pago(integer,integer,character varying) en la línea 9 en RAISE 
+
+SQL state: P0001
+```
+Bien, ahora intentemos pagar un pedido que exista pero no este pendiente
+```sql
+CALL registrar_pago(3,589980,'tarjeta');
+```
+Deberia salir una de las exceptions. El resultado es:
+```sql
+ERROR:  ERROR, este pedido no presenta el estado pendiente, por ende, el pago ya fue realizado para este pedido
+CONTEXT:  función PL/pgSQL registrar_pago(integer,integer,character varying) en la línea 15 en RAISE 
+
+SQL state: P0001
+```
+Bien, ahora intentemos pagar un pedido que exista y que este pendiente pero con un monto insuficiente
+```sql
+CALL registrar_pago(1,1000,'tarjeta');
+```
+Deberia salir otra exception. El resultado es:
+```sql
+ERROR:  ERROR, el monto otorgado es menor a lo que hay que pagar
+CONTEXT:  función PL/pgSQL registrar_pago(integer,integer,character varying) en la línea 19 en RAISE 
+
+SQL state: P0001
+```
+Bien, ahora intentemos pagar un pedido que exista y que este pendiente y con un monto igual o superior, pero con un metodo de pago no permitido por nuestra base de datos
+```sql
+CALL registrar_pago(1,779970,'francodolares');
+```
+Deberia salir otra exception. El resultado es:
+```sql
+ERROR:  ERROR, la forma de pago no es aceptada en nuestra base de datos (se recomienda solo uso de minusculas para declarar tu tipo de pago)
+CONTEXT:  función PL/pgSQL registrar_pago(integer,integer,character varying) en la línea 24 en RAISE 
+
+SQL state: P0001
+```
+Bien, ahora intentemos pagar un pedido que exista y que este pendiente y con un monto igual o superior y con un metodo de pago admitido por nuestra base de datos
+```sql
+CALL registrar_pago(1,779970,'efectivo');
+```
+Deberia salir todo bien. Eso si creo que antes de realizar esto debemos sincronizar el contador de serial de pagos:
+```sql
+SELECT setval('pago_pago_id_seq', (SELECT MAX(pago_id) FROM pago));
+```
+Una vez hecho esto, nuestro resultado es:
+```sql
+NOTICE:  Cliente Numero 38, Su Pedido 1 ha cambiado de estado a: procesado
+NOTICE:  Pago registrado
+CALL
+
+Query returned successfully in 144 msec.
+```
+EXITOOOOO, y si revisamos la tabla de pagos, podemos ver que si se registro
