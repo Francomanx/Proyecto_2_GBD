@@ -307,9 +307,9 @@ LANGUAGE plpgsql AS $$
 BEGIN
     --verificamos si el personal no existe. En el caso de que no, se llama la excepcion para mostrar el error en el output
     IF NOT EXISTS (
-        SELECT * FROM personal WHERE personal_id = id_personal AND rol = 'Administrador'
+        SELECT * FROM personal WHERE personal_id = id_personal AND rol = 'Administrador' and activo = TRUE
     ) THEN
-        RAISE EXCEPTION 'ERROR, solo los administradores pueden realizar cambios de estados';
+        RAISE EXCEPTION 'ERROR, solo los administradores o personal administrador activo pueden realizar cambios de estados';
     END IF;
     --si la excepcion no se llama, significa que podemos pasar a la siguiente verificacion
 	--ahora verificamos si el id del pedido no existe en nuestra base de datos
