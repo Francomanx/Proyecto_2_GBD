@@ -683,8 +683,17 @@ ORDER BY c.cliente_id, p.fecha_pedido DESC;
 
 
 ## Funciones y Reglas
-
-
+**validar_rut_chileno(rut VARCHAR(12)): Verifica formato y dígito verificador.**
+```sql
+CREATE OR REPLACE FUNCTION validar_rut_chileno(rut VARCHAR(12))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$ 
+BEGIN
+    RETURN rut ~ '^[0-9]{7,8}-[0-9Kk]$';
+END;
+$$;
+```
 ## Casos de Prueba
 **Prueba numero 1: Funcionalidad correcta de Procedure G y Trigger B**
 
@@ -1059,3 +1068,23 @@ CONTEXT:  función PL/pgSQL notificar_actualizacion_de_estado_cliente(integer) e
 SQL state: P0001
 ```
 Perfecto
+
+**Prueba numero 13: Validar rut chileno**
+
+Comprobaremos que el rut ingresado siga la formula esperada por nuestra base de datos (xxxxxxxx-x). Pondremos a prueba la funcion con esta consulta:
+```sql
+SELECT validar_rut_chileno('21045981-2');
+```
+Deberia retornar true. Nuestro resultado es:
+```sql
+true
+```
+Muy bien, que pasa si ponemos un rut incorrecto?:
+```sql
+SELECT validar_rut_chileno('123424321');
+```
+Deberia retornar false. Nuestro resultado es:
+```sql
+false
+```
+EXITO
