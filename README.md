@@ -231,6 +231,36 @@ BEGIN
 END;
 $$;
 ```
+**F.- Actualizar umbrales de stock critico por producto**
+```sql
+CREATE OR REPLACE PROCEDURE actualizar_umbral_critico(id_producto INTEGER, nuevo_umbral_critico INTEGER)
+LANGUAGE plpgsql AS $$
+DECLARE viejo_umbral_critico INTEGER;
+BEGIN
+	--Primero verificamos si el id del producto existe
+	IF NOT EXISTS (
+		SELECT 1 FROM productos WHERE productos.producto_id = id_producto  
+	)THEN
+		RAISE EXCEPTION 'ERROR, la id escrita del producto no se encuentra presente en nuestra base de datos';
+	END IF;
+	--Si existe, verificamos si el valor del umbral es el adecuado
+	IF (nuevo_umbral_critico<0) THEN
+		RAISE EXCEPTION 'ERROR, el nuevo umbral no cumple con las reglas impuestas por la base de datos (debe ser un numero positivo)';
+	END IF;
+	--Verificamos si el nuevo umbral tiene el mismo valor que antes
+	SELECT umbral_critico INTO viejo_umbral_critico FROM productos WHERE productos.producto_id = id_producto;
+	IF (viejo_umbral_critico = nuevo_umbral_critico) THEN
+		RAISE NOTICE 'el nuevo valor del umbral es el mismo que el anterior, por ende es un cambio innecesario';
+		RETURN;
+	END IF;
+	--Una vez hecha las verificaciones, pasamos a editarlo
+	UPDATE productos
+	SET umbral_critico = nuevo_umbral_critico
+	WHERE productos.producto_id = id_producto;
+	RAISE NOTICE 'Umbral critico editado';
+END;
+$$;
+```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
 ```sql
 --no sabia que se podia comentar waos
@@ -959,3 +989,15 @@ Usamos esta consulta:
 SELECT * FROM generar_informe_entregas_distribuidor();
 ```
 y nos genera la lista deseada :D
+
+**Prueba Numero 11: Verificar cambio de umbral critico por producto**
+Vamos a cambiar el valor del umbral critico de un producto con la siguiente consulta:
+```sql
+CALL actualizar_umbral_critico(12, 6);
+```
+Esto deberia de cambiar el producto 12 a tener el valor de umbral critico de 4 a 6. Vamos a ver:
+```sql
+NOTICE:  Umbral critico editado
+CALL
+````
+EXITOOO. 
