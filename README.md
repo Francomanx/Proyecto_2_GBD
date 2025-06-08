@@ -683,7 +683,7 @@ ORDER BY c.cliente_id, p.fecha_pedido DESC;
 
 
 ## Funciones y Reglas
-**validar_rut_chileno(rut VARCHAR(12)): Verifica formato y dígito verificador.**
+**A.- validar_rut_chileno(rut VARCHAR(12)): Verifica formato y dígito verificador.**
 ```sql
 CREATE OR REPLACE FUNCTION validar_rut_chileno(rut VARCHAR(12))
 RETURNS BOOLEAN
@@ -691,6 +691,17 @@ LANGUAGE plpgsql
 AS $$ 
 BEGIN
     RETURN rut ~ '^[0-9]{7,8}-[0-9Kk]$';
+END;
+$$;
+```
+**B.- es_mayor_edad(fecha_nacimiento DATE): Retorna TRUE si el cliente es mayor de 18 años.**
+```sql
+CREATE OR REPLACE FUNCTION es_mayor_edad(fecha_nacimiento DATE)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$ 
+BEGIN
+    RETURN AGE(fecha_nacimiento) >= INTERVAL '18 years';
 END;
 $$;
 ```
@@ -1080,6 +1091,26 @@ Deberia retornar true. Nuestro resultado es:
 true
 ```
 Muy bien, que pasa si ponemos un rut incorrecto?:
+
+**Prueba numero 14: Verificar edad en base a una fecha**
+
+Comprobaremos si al entregar una fecha se confirma si el cliente es mayor de edad o no. Usaremos la siguiente consulta
+```sql
+SELECT es_mayor_edad('2002-09-08');
+```
+Esto deberia retornar true. El resultado es:
+```sql
+true
+```
+Muy, bien, ahora si pasamos a alguien menor de edad:
+```sql
+SELECT es_mayor_edad('2020-01-01');
+```
+Esto deberia retornar false. El resultado es:
+```sql
+false
+```
+EXITO
 ```sql
 SELECT validar_rut_chileno('123424321');
 ```
