@@ -388,7 +388,7 @@ BEGIN
 	--verificamos el estado del pedido para ver si paso a ser procesado o no. En caso de, tambien vale revisar si el estado procesado ya lo tuvo
 	IF NEW.estado = 'procesado' AND OLD.estado != 'procesado' THEN
 		--Si resulta estar procesado buscamos un repartidor al azar
-		SELECT personal_id INTO id_repartidor FROM personal WHERE rol = 'Distribuidor'
+		SELECT personal_id INTO id_repartidor FROM personal WHERE rol = 'Distribuidor' AND activo = TRUE
 		ORDER BY RANDOM() LIMIT 1;
 
 		--En caso de que no hayan repartidores disponibles
