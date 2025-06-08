@@ -214,6 +214,23 @@ BEGIN
 END;
 $$;
 ```
+**D.- Generar informe de entregas por distribuidor**
+```sql
+CREATE OR REPLACE FUNCTION generar_informe_entregas_distribuidor()
+RETURNS TABLE (distribuidor_id INTEGER,distribuidor_nombre VARCHAR(100),cantidad_entregas INTEGER)
+LANGUAGE plpgsql
+AS $$ 
+BEGIN
+    RETURN QUERY
+    SELECT distribuidor.personal_id, distribuidor.nombre, CAST(COUNT(envio.envio_id) AS INTEGER)
+    FROM envios envio
+    INNER JOIN personal distribuidor ON envio.distribuidor_id = distribuidor.personal_id
+    WHERE distribuidor.rol = 'Distribuidor' AND envio.estado_envio = 'entregado'
+    GROUP BY distribuidor.personal_id, distribuidor.nombre
+    ORDER BY COUNT(envio.envio_id) DESC;
+END;
+$$;
+```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
 ```sql
 --no sabia que se podia comentar waos
@@ -935,3 +952,10 @@ Usamos esta consulta:
 SELECT * FROM generar_reporte_ventas(6, 2025);
 ```
 y nos genera las listas deseadas... xd nose como colocar la tabla aca sjkdnskjdnskjd
+
+**Prueba Numero 10: Verificar impresion correcta de tabla de entregas realizadas por cada distribuidor**
+Usamos esta consulta:
+```sql
+SELECT * FROM generar_informe_entregas_distribuidor();
+```
+y nos genera la lista deseada :D
