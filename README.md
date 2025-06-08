@@ -192,6 +192,28 @@ BEGIN
 END;
 $$;
 ```
+**C.- Generar reporte mensual de ventas por vendedor**
+```sql
+CREATE OR REPLACE FUNCTION generar_reporte_ventas(mes INTEGER, anio INTEGER)
+RETURNS TABLE (vendedor_id INTEGER,vendedor_nombre VARCHAR(100),cantidad_pedidos INTEGER,total_ventas INTEGER)
+LANGUAGE plpgsql
+AS $$ 
+BEGIN
+    RETURN QUERY
+    SELECT vendedor.personal_id, 
+           vendedor.nombre,
+           CAST(COUNT(pedido.pedido_id) AS INTEGER),
+           CAST(SUM(pedido.total) AS INTEGER)
+    FROM pedidos pedido
+    JOIN personal vendedor ON pedido.vendedor_id = vendedor.personal_id
+    WHERE vendedor.rol = 'Vendedor'
+      AND EXTRACT(MONTH FROM pedido.fecha_pedido) = mes
+      AND EXTRACT(YEAR FROM pedido.fecha_pedido) = anio
+    GROUP BY vendedor.personal_id, vendedor.nombre
+    ORDER BY SUM(pedido.total) DESC;
+END;
+$$;
+```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
 ```sql
 --no sabia que se podia comentar waos
@@ -906,3 +928,10 @@ CALL
 Query returned successfully in 144 msec.
 ```
 EXITOOOOO, y si revisamos la tabla de pagos, podemos ver que si se registro
+
+**Prueba Numero 9: Verificar impresion correcta de tabla de ganancias mensuales de vendedores**
+Usamos esta consulta:
+```sql
+SELECT * FROM generar_reporte_ventas(6, 2025);
+```
+y nos genera las listas deseadas... xd nose como colocar la tabla aca sjkdnskjdnskjd
