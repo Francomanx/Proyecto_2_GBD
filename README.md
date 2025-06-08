@@ -571,7 +571,7 @@ SELECT
     stock,
     precio
 FROM productos
-WHERE stock < 5 AND activo = true;
+WHERE stock <= umbral_critico AND activo = true;
 ```
 
 **C.- Seguimiento_Envios: Consulta de pedidos, estados de envío y responsables.**
@@ -595,90 +595,63 @@ ORDER BY p.pedido_id DESC;
 
 **D.- Ventas_Por_Vendedor: Muestra totales por personal de ventas.**
 ```sql
-CREATE VIEW Historial_Cliente AS
+CREATE VIEW Ventas_Por_Vendedor AS
 SELECT 
-    c.cliente_id,
-    c.nombre AS nombre_cliente,
-    c.correo_electronico,
-    p.pedido_id,
-    p.fecha_pedido,
-    p.estado AS estado_pedido,
-    p.total AS total_pedido,
-    pg.pago_id,
-    pg.fecha_pago,
-    pg.monto,
-    pg.metodo_pago,
-    pg.estado_pago
-FROM clientes c
-INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
-LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
-ORDER BY c.cliente_id, p.fecha_pedido DESC;
+    per.personal_id,
+    per.nombre AS nombre_vendedor,
+    COUNT(p.pedido_id) AS cantidad_pedidos,
+    SUM(p.total) AS total_ventas
+FROM personal per
+JOIN pedidos p ON per.personal_id = p.vendedor_id
+GROUP BY per.personal_id, per.nombre
+ORDER BY total_ventas DESC;
 ```
 
 **E.- Entregas_Por_Distribuidor: Listado de entregas por distribuidor.**
 ```sql
-CREATE VIEW Historial_Cliente AS
+CREATE VIEW Entregas_Por_Distribuidor AS
 SELECT 
-    c.cliente_id,
-    c.nombre AS nombre_cliente,
-    c.correo_electronico,
-    p.pedido_id,
-    p.fecha_pedido,
-    p.estado AS estado_pedido,
-    p.total AS total_pedido,
-    pg.pago_id,
-    pg.fecha_pago,
-    pg.monto,
-    pg.metodo_pago,
-    pg.estado_pago
-FROM clientes c
-INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
-LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
-ORDER BY c.cliente_id, p.fecha_pedido DESC;
+    per.personal_id,
+    per.nombre AS nombre_distribuidor,
+    COUNT(e.envio_id) AS entregas_realizadas,
+    MAX(e.fecha_entrega) AS ultima_entrega
+FROM personal per
+JOIN envios e ON per.personal_id = e.distribuidor_id
+WHERE e.estado_envio = 'entregado'
+GROUP BY per.personal_id, per.nombre
+ORDER BY entregas_realizadas DESC;
 ```
 
 **F.- Notificaciones_Cliente: Historial de notificaciones enviadas a clientes.**
 ```sql
-CREATE VIEW Historial_Cliente AS
+CREATE VIEW Notificaciones_Cliente AS
 SELECT 
     c.cliente_id,
     c.nombre AS nombre_cliente,
     c.correo_electronico,
     p.pedido_id,
-    p.fecha_pedido,
-    p.estado AS estado_pedido,
-    p.total AS total_pedido,
-    pg.pago_id,
-    pg.fecha_pago,
-    pg.monto,
-    pg.metodo_pago,
-    pg.estado_pago
-FROM clientes c
-INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
-LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
-ORDER BY c.cliente_id, p.fecha_pedido DESC;
+    a.estado_anterior,
+    a.estado_nuevo,
+    a.fecha_cambio,
+    'Cambio de estado del pedido' AS tipo_notificacion
+FROM auditoria_pedidos a
+JOIN pedidos p ON a.pedido_id = p.pedido_id
+JOIN clientes c ON p.cliente_id = c.cliente_id
+ORDER BY a.fecha_cambio DESC;
 ```
 
 **G.- Alerta_Stock_Critico: Productos con stock por debajo del umbral mínimo.**
 ```sql
-CREATE VIEW Historial_Cliente AS
+CREATE VIEW Alerta_Stock_Critico AS
 SELECT 
-    c.cliente_id,
-    c.nombre AS nombre_cliente,
-    c.correo_electronico,
-    p.pedido_id,
-    p.fecha_pedido,
-    p.estado AS estado_pedido,
-    p.total AS total_pedido,
-    pg.pago_id,
-    pg.fecha_pago,
-    pg.monto,
-    pg.metodo_pago,
-    pg.estado_pago
-FROM clientes c
-INNER JOIN pedidos p ON c.cliente_id = p.cliente_id
-LEFT JOIN pago pg ON p.pedido_id = pg.pedido_id
-ORDER BY c.cliente_id, p.fecha_pedido DESC;
+    producto_id,
+    nombre,
+    categoria,
+    stock,
+    precio,
+    'Stock por debajo del mínimo crítico' AS alerta
+FROM productos
+WHERE stock <= umbral_critico AND activo = true;
 ```
 
 
