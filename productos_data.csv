@@ -1,31 +1,31 @@
-producto_id,nombre,descripcion,precio,stock,categoria,activo
-1,Telefono Motorola,"Octacore, 128GB RAM, 5G",280000,15,Electronica,true
-2,Zapatillas Adidas,"Tallas 38-44, color azul/negro",59990,25,Calzado,true
-3,Notebook Lenovo Ultra YOGA,"Intel i7, 16GB RAM, SSD 512GB",799990,8,Electronica,true
-4,Sartenes Antioxidantes,"4 piezas, acero inoxidable",39990,12,Hogar,true
-5,Audífonos Inalámbricos Motorola,"Cancelación de ruido, 20h batería",89990,30,Electronica,true
-6,Mesa de Madera para Comedor,"80x80cm, barnizado",129990,5,Hogar,true
-7,Cámara SONY 24MP,"Kit con lente 18-55mm",499990,3,Electronica,true
-8,Set de Toallas Casaideas,"Juego de 4 toallas baño",24990,40,Hogar,true
-9,SmartWatch Samsung,"Monitor cardiaco, GPS",99990,18,Electronica,true
-10,Mochila Xtrem,"Capacidad 30L, color negro",34990,22,Accesorios,true
-11,Bicicleta Montaña,"21 velocidades, suspensión",399990,6,Deportes,true
-12,Cafetera Inteligente,"1.5L, función auto-apagado",45990,9,Hogar,true
-13,Lavadora LG,"8 programas, eficiencia A++",599990,4,Electrodomésticos,true
-14,Libro Cocina Chilena,"500 recetas, tapa dura",19990,30,Libros,true
-15,Silla Oficina Ergonómica,"Ajustable, soporte lumbar",89990,11,Muebles,true
-16,Televisor SONY Bravia 4K,"Smart TV, HDR, Android TV",499990,7,Electrónica,true
-17,Taladro Inalámbrico,"Batería Li-ion 20V",69990,14,Herramientas,true
-18,Aspiradora Inteligente,"Programable, mapeo inteligente",299990,3,Electrodomésticos,true
-19,Set de Maletas 3 Piezas,"Incluye maleta grande, mediana y carry-on",159990,8,Accesorios,true
-20,Horno Microondas 30L,"Grill, 10 niveles potencia",89990,10,Electrodomésticos,true
-21,Balanza Digital,"Precisión 1g, capacidad 5kg",14990,25,Hogar,true
-22,Barra Sonido Bluetooth,"360W, subwoofer inalámbrico",129990,6,Electrónica,true
-23,Colchón KING,"Resortes ensacados, 140x190cm",299990,2,Dormitorio,true
-24,Patín Eléctrico,"30km autonomía, 25km/h",399990,5,Deportes,true
-25,Organizador de Ropa 6 Cajones,"Tela resistente, 90x45x45cm",34990,17,Hogar,true
-26,Licuadora Profesional,"1500W, vaso vidrio 2L",49990,13,Electrodomésticos,true
-27,Guantes de Cocina Silicona,"Resistente a 250°C",8990,45,Hogar,true
-28,Monitor Gamer de 27 pulgadas Full HD,"75Hz, HDMI/VGA",149990,9,Electrónica,true
-29,Juego de Té Porcelana,"12 piezas, diseño floral",29990,20,Hogar,true
-30,Altavoz Portátil Redmi,"Resistente al agua, 20h batería",65990,11,Electrónica,true
+producto_id,nombre,descripcion,precio,stock,categoria,activo,umbral_critico
+1,Telefono Motorola,"Octacore, 128GB RAM, 5G",280000,15,Electronica,t,4
+2,Zapatillas Adidas,"Tallas 38-44, color azul/negro",59990,25,Calzado,t,4
+3,Notebook Lenovo Ultra YOGA,"Intel i7, 16GB RAM, SSD 512GB",799990,8,Electronica,t,4
+4,Sartenes Antioxidantes,"4 piezas, acero inoxidable",39990,12,Hogar,t,4
+5,Audífonos Inalámbricos Motorola,"Cancelación de ruido, 20h batería",89990,3,Electronica,t,4
+6,Mesa de Madera para Comedor,"80x80cm, barnizado",129990,5,Hogar,t,4
+7,Cámara SONY 24MP,Kit con lente 18-55mm,499990,5,Electronica,t,4
+8,Set de Toallas Casaideas,Juego de 4 toallas baño,24990,40,Hogar,t,4
+9,SmartWatch Samsung,"Monitor cardiaco, GPS",99990,18,Electronica,t,4
+4,Mochila Xtrem,"Capacidad 30L, color negro",34990,22,Accesorios,t,4
+11,Bicicleta Montaña,"21 velocidades, suspensión",399990,6,Deportes,t,4
+12,Cafetera Inteligente,"1.5L, función auto-apagado",45990,9,Hogar,t,4
+13,Lavadora LG,"8 programas, eficiencia A++",599990,5,Electrodomésticos,t,4
+14,Libro Cocina Chilena,"500 recetas, tapa dura",19990,30,Libros,t,4
+15,Silla Oficina Ergonómica,"Ajustable, soporte lumbar",89990,11,Muebles,t,4
+16,Televisor SONY Bravia 4K,"Smart TV, HDR, Android TV",499990,7,Electrónica,t,4
+17,Taladro Inalámbrico,Batería Li-ion 20V,69990,14,Herramientas,t,4
+18,Aspiradora Inteligente,"Programable, mapeo inteligente",299990,3,Electrodomésticos,t,4
+19,Set de Maletas 3 Piezas,"Incluye maleta grande, mediana y carry-on",159990,8,Accesorios,t,4
+20,Horno Microondas 30L,"Grill, 4 niveles potencia",89990,5,Electrodomésticos,t,4
+21,Balanza Digital,"Precisión 1g, capacidad 5kg",14990,25,Hogar,t,4
+22,Barra Sonido Bluetooth,"360W, subwoofer inalámbrico",129990,6,Electrónica,t,4
+23,Colchón KING,"Resortes ensacados, 140x190cm",299990,5,Dormitorio,t,4
+24,Patín Eléctrico,"30km autonomía, 25km/h",399990,5,Deportes,t,4
+25,Organizador de Ropa 6 Cajones,"Tela resistente, 90x45x45cm",34990,17,Hogar,t,4
+26,Licuadora Profesional,"1500W, vaso vidrio 2L",49990,13,Electrodomésticos,t,4
+27,Guantes de Cocina Silicona,Resistente a 250°C,8990,45,Hogar,t,4
+28,Monitor Gamer de 27 pulgadas Full HD,"75Hz, HDMI/VGA",149990,9,Electrónica,t,4
+29,Juego de Té Porcelana,"12 piezas, diseño floral",29990,20,Hogar,t,4
+30,Altavoz Portátil Redmi,"Resistente al agua, 20h batería",65990,11,Electrónica,t,4
