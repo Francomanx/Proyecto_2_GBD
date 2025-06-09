@@ -44,7 +44,7 @@ CREATE TABLE personal(
 ```sql
 CREATE TABLE pedidos (
     pedido_id SERIAL PRIMARY KEY,
-    cliente_id INTEGER NOT NULL REFERENCES clientes(cliente_id),
+    cliente_id INTEGER NOT NULL REFERENCES clientes(cliente_id) ON DELETE CASCADE,
     fecha_pedido DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
     total INTEGER NOT NULL DEFAULT 0 CHECK (total >= 0),
@@ -64,11 +64,11 @@ CREATE TABLE detalle_pedido (
 ```sql
 CREATE TABLE pago (
     pago_id SERIAL PRIMARY KEY,
-    pedido_id INT NOT NULL REFERENCES pedidos(pedido_id),
+    pedido_id INT NOT NULL REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
     fecha_pago DATE DEFAULT CURRENT_DATE,
     monto INTEGER NOT NULL CHECK (monto > 0),
-    metodo_pago VARCHAR(50) CHECK (metodo_pago IN ('tarjeta', 'efectivo')),
-    estado_pago VARCHAR(50) CHECK (estado_pago IN ('pendiente', 'completado', 'rechazado'))
+    metodo_pago VARCHAR(50) NOT NULL CHECK (metodo_pago IN ('tarjeta', 'efectivo')),
+    estado_pago VARCHAR(50) NOT NULL DEFAULT 'pendiente' CHECK (estado_pago IN ('pendiente', 'completado', 'rechazado'))
 );
 ```
 ```sql
