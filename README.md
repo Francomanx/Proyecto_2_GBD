@@ -452,9 +452,13 @@ BEGIN
     FROM pedidos pedidito
     WHERE pedidito.pedido_id = NEW.pedido_id;
 
-    -- Verificar si el estado del envío cambió
+    --verificamos si el estado del envío cambió
     IF NEW.estado_envio != OLD.estado_envio THEN
         RAISE NOTICE 'Cliente Numero %, su pedido % ha cambiado el estado de su envio a: %', id_cliente, NEW.pedido_id, NEW.estado_envio;
+    END IF;
+    --si es que ahora esta entregado, añadimos un valor a fecha_entrega
+    IF OLD.estado_envio = 'enviando' AND NEW.estado_envio = 'entregado' THEN
+  	NEW.fecha_entrega := CURRENT_DATE;
     END IF;
 
     RETURN NEW;
@@ -462,7 +466,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE TRIGGER trigger_notificacion_cambio_envio_cliente
-AFTER UPDATE ON envios
+BEFORE UPDATE ON envios
 FOR EACH ROW
 EXECUTE FUNCTION notificar_cambio_estado_envio_a_cliente();
 
