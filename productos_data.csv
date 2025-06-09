@@ -8,7 +8,7 @@ producto_id,nombre,descripcion,precio,stock,categoria,activo,umbral_critico
 7,Cámara SONY 24MP,Kit con lente 18-55mm,499990,5,Electronica,t,4
 8,Set de Toallas Casaideas,Juego de 4 toallas baño,24990,40,Hogar,t,4
 9,SmartWatch Samsung,"Monitor cardiaco, GPS",99990,18,Electronica,t,4
-4,Mochila Xtrem,"Capacidad 30L, color negro",34990,22,Accesorios,t,4
+10,Mochila Xtrem,"Capacidad 30L, color negro",34990,22,Accesorios,t,4
 11,Bicicleta Montaña,"21 velocidades, suspensión",399990,6,Deportes,t,4
 12,Cafetera Inteligente,"1.5L, función auto-apagado",45990,9,Hogar,t,4
 13,Lavadora LG,"8 programas, eficiencia A++",599990,5,Electrodomésticos,t,4
