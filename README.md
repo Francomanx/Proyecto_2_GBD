@@ -719,7 +719,7 @@ CALL actualizar_estado_pedido(9,'entregado',7);
 ```
 Esto deberia dar error en la primer verificacion:
 ```sql
-ERROR:  ERROR, solo los administradores pueden realizar cambios de estados
+ERROR:  ERROR, solo los administradores o personal administrador activo pueden realizar cambios de estados
 CONTEXT:  función PL/pgSQL actualizar_estado_pedido(integer,character varying,integer) en la línea 7 en RAISE 
 
 SQL state: P0001
