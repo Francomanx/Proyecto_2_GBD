@@ -126,7 +126,16 @@ Considerar que {ruta} es donde se clono este repositorio (ej. ```'C:/Users/juan/
 ```sql
 \copy envios FROM '{ruta}/Proyecto_2_GBD/envios_data.csv' DELIMITER ',' CSV HEADER
 ```
-
+Y una vez que haya cargado los datos a las tablas puede usar los siguientes codigos para sincronizar el contador de ids
+```sql
+SELECT setval('clientes_cliente_id_seq', (SELECT MAX(cliente_id) FROM clientes));
+SELECT setval('pedidos_pedido_id_seq', (SELECT MAX(pedido_id) FROM pedidos));
+SELECT setval('detalle_pedido_detalle_id_seq', (SELECT MAX(detalle_id) FROM detalle_pedido));
+SELECT setval('envios_envio_id_seq', (SELECT MAX(envio_id) FROM envios));
+SELECT setval('pago_pago_id_seq', (SELECT MAX(pago_id) FROM pago));
+SELECT setval('productos_producto_id_seq', (SELECT MAX(producto_id) FROM productos));
+SELECT setval('personal_personal_id_seq', (SELECT MAX(personal_id) FROM personal));
+```
 
 ## Procedures y (Funciones)
 **A.- Calcular y actualizar el total del pedido**
