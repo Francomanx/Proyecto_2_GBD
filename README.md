@@ -137,9 +137,8 @@ SELECT setval('productos_producto_id_seq', (SELECT MAX(producto_id) FROM product
 SELECT setval('personal_personal_id_seq', (SELECT MAX(personal_id) FROM personal));
 ```
 
-## Procedures y (Funciones)
+## Procedimientos Almacenados
 **A.- Calcular y actualizar el total del pedido**
-me acabo de dar cuenta que un procedure tambien estaria bueno, pero esto igual funciona
 ```sql
 CREATE FUNCTION calcular_total_de_pedido(id_pedido INTEGER)
 RETURNS INTEGER AS $$
@@ -309,7 +308,6 @@ $$;
 ```
 **(EXTRA) G.- Actualizar estado de un pedido (Solo los administradores pueden hacerlo)**
 ```sql
---no sabia que se podia comentar waos
 --el procedure va a pedir el id del pedido, junto con el nuevo estado que se le quiera dar, y el id_del personal para verificar si es administrador o non
 CREATE OR REPLACE PROCEDURE actualizar_estado_pedido(id_pedido INTEGER, nuevo_estado VARCHAR(50), id_personal INTEGER)
 LANGUAGE plpgsql AS $$
@@ -327,7 +325,7 @@ BEGIN
 	) THEN
 		RAISE EXCEPTION 'ERROR, el pedido ingresado no existe en nuestros datos';
 	END IF;
-	--ahora si ninguna de estas excepciones gritonearon, significa que podemos actualizar nuestro pedido
+	--ahora si ninguna de estas excepciones se activaron, significa que podemos actualizar nuestro pedido
 
 	-- el id del personal se puede guardar en una session. En caso de que un trigger necesite informacion adicional, los sessions 
 	PERFORM set_config('session.usuario_cambio', id_personal::TEXT, FALSE);
@@ -365,6 +363,7 @@ FOR EACH ROW
 EXECUTE FUNCTION descontar_stock_producto();
 ```
 **B.- Registrar cambios de estado del pedido en Auditoria_Pedidos**
+
 Se hizo tanto el trigger como la funcion asociada al proceso de insercion del cambio de estado en uditoria_pedidos
 ```sql
 CREATE OR REPLACE FUNCTION actualizar_auditoria_pedido()
@@ -424,7 +423,7 @@ EXECUTE FUNCTION registrar_inicio_de_proceso_envio();
 ```
 **D.- Disparar una notificación automática al cliente cada vez que cambie el estado del pedido o del envío. (100% COMPLETO)**
 ```sql
--- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio pipipi
+-- Trigger SOLO PARA CAMBIO DE ESTADO DEL PEDIDO, hay que hacer otro para el envio, pero para eso hay que hacer un procedure que cambie el estado de un envio
 CREATE OR REPLACE FUNCTION notificar_cambio_estado_pedido_a_usuario()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -546,8 +545,6 @@ AFTER UPDATE ON productos
 FOR EACH ROW
 EXECUTE FUNCTION detectar_stock_critico();
 ```
-consideremos hacer uno para actualizar el precio unitario de los productos en detalle_pedido. La idea que tengo es que el precio unitario de detalle_pedido deberia tener el mismo valor que presenta al producto que referencia a traves de producto_id. En el faker es facil de hacer pero nose como referenciarlo a traves de sql, asi que creo que toco hacer un trigger adicional pipipi
-
 
 ## Vistas
 **A.- Historial_Cliente: Muestra todos los pedidos y pagos por cliente.**
@@ -712,4 +709,197 @@ END;
 $$;
 ```
 ## Casos de Prueba
-**Esta seccion se elimino puesto que el documento tiene experimentos y pruebas mas recientes con una mejor documentacion**
+**Esta seccion se re-edito puesto que el documento tiene experimentos y pruebas mas recientes con una mejor documentacion. Aqui solamente se dejaran los Scripts y consultas para verificar los experimentos con mayor facilidad**
+
+**1.- Funcionalidad Correcta de Procedimiento para Cambiar Estado de Pedido y Trigger para Insertar Cambios de Estado en auditoria_pedidos.**
+
+```sql
+CALL actualizar_estado_pedido(75,'entregado',8);
+```
+```sql
+CALL actualizar_estado_pedido(9,'entregado',7);
+```
+```sql
+CALL actualizar_estado_pedido(1,'pendiente',8);
+```
+```sql
+CALL actualizar_estado_pedido(1,'procesado',8);)
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado G
+- Trigger B
+- Trigger C
+- Trigger D (50%)
+
+**2.- Funcionalidad del Descuento de Stock.**
+
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (5,1,2,280000);
+```
+```sql
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (1,1,16,280000);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Trigger A
+
+**3.- Funcionalidad de Notificación de Cambio de Estado de Envío.**
+
+```sql
+UPDATE envios
+SET estado_envios = 'entregado'
+WHERE pedido_id = 1;
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Trigger D (100%)
+
+**4.- Funcionalidad para Evitar Eliminar Cliente con Pedidos Activos.**
+
+```sql
+DELETE FROM clientes WHERE cliente_id = 28;
+```
+```sql
+DELETE FROM clientes WHERE cliente_id = 35;
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Trigger E
+
+**5.- Funcionalidad para Evitar Asignar Pedidos a Personal Inexistente o Inactiva.**
+
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id)
+VALUES (99, 'pendiente', 2);
+```
+```sql
+UPDATE personal
+SET activo = FALSE
+WHERE personal_id = 2;
+```
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id)
+VALUES (1, 'pendiente', 2);
+```
+```sql
+UPDATE personal
+SET activo = TRUE
+WHERE personal_id = 2;
+```
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id)
+VALUES (1, 'pendiente', 2);
+```
+```sql
+INSERT INTO pedidos (cliente_id, estado, vendedor_id)
+VALUES (2, 'pendiente', 1);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Trigger F
+
+**6.- Funcionalidad para Mostrar Mensaje de Stock Crítico.**
+
+```sql
+UPDATE productos SET stock = 3 WHERE producto_id = 5;
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Trigger G
+
+**7.- Funcionalidad para Registrar Pago de un Pedido Pendiente.**
+
+```sql
+CALL registrar_pago(99, 5000, 'tarjeta');
+```
+```sql
+CALL registrar_pago(1, 589980, 'tarjeta');
+```
+```sql
+CALL registrar_pago(2, 1000, 'tarjeta');
+```
+```sql
+CALL registrar_pago(2, 377940, 'francodolares');
+```
+```sql
+CALL registrar_pago(2, 377940, 'tarjeta');
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado B
+
+**8.- Funcionalidad para Imprimir la Tabla de Ganancias Mensuales de Vendedores.**
+
+```sql
+SELECT * FROM generar_reporte_ventas(6,2025);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado C
+
+**9.- Funcionalidad para Imprimir las Entregas Realizadas por Cada Distribuidor.**
+
+```sql
+SELECT * FROM generar_informe_entregas_distribuidor();
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado D
+
+**10.- Funcionalidad para Cambiar el Valor del Umbral Crítico por Producto.**
+
+```sql
+CALL actualizar_umbral_critico(12,6);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado F
+
+**11.- Funcionalidad para Verificar Envío de Notificaciones a Usuarios Respecto a los Cambios de Estado de sus Pedidos.**
+
+```sql
+CALL notificar_actualizacion_de_estado_cliente(38);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Procedimiento Almacenado E
+
+**12.- Funcionalidad para Validar un rut Chileno.**
+
+```sql
+SELECT validar_rut_chileno('21045981-2');
+```
+```sql
+SELECT validar_rut_chileno('21.045.982.1');
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Funcion A
+
+**13.- Funcionalidad para Verificar la edad con Base en una Fecha**
+
+```sql
+SELECT es_mayor_edad('2002-09-08');
+```
+```sql
+SELECT es_mayor_edad('2020-01-01');
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Funcion B
+
+**14.- Funcionalidad para Preguntar Stock Crítico de un Producto.**
+
+```sql
+SELECT es_stock_critico(105);
+```
+```sql
+SELECT es_stock_critico(1);
+```
+```sql
+SELECT es_stock_critico(5);
+```
+
+Con este experimento se confirma el funcionamiento de:
+- Funcion C
