@@ -713,7 +713,7 @@ END;
 $$;
 ```
 ## Casos de Prueba
-**Esta seccion se re-edito puesto que el documento tiene experimentos y pruebas mas recientes con una mejor documentacion. Aqui solamente se dejaran los Scripts y consultas para verificar los experimentos con mayor facilidad**
+**Esta seccion se re-edito puesto que el documento tiene experimentos y pruebas con una mejor documentacion. Aqui solamente se dejaran los Scripts y consultas para verificar los experimentos con mayor facilidad mientras se lee el informe**
 
 **1.- Funcionalidad Correcta de Procedimiento para Cambiar Estado de Pedido y Trigger para Insertar Cambios de Estado en auditoria_pedidos.**
 
