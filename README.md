@@ -1,5 +1,6 @@
 ## Proyecto_2_GBD
 Base de Datos Activa
+
 Integrantes:
 - Franco Arenas
 - Jeremi Arriagada
