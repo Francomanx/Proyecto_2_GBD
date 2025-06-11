@@ -1,5 +1,8 @@
 ## Proyecto_2_GBD
-Insertar Descriptción
+Base de Datos Activa
+Integrantes:
+- Franco Arenas
+- Jeremi Arriagada
 
 
 ## Tablas
